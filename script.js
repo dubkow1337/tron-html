@@ -6,8 +6,8 @@ const WIDTH = canvas.width / CELL_SIZE;
 const HEIGHT = canvas.height / CELL_SIZE;
 let MOVE_INTERVAL = 120;
 
-let opponentType = '2p';      // '2p', 'ai', 'survival'
-let matchMode = 'classic';    // 'classic', 'tournament'
+let opponentType = '2p';
+let matchMode = 'classic';
 let gameLoop = null;
 let gameActive = true;
 let winner = null;
@@ -22,15 +22,60 @@ let bestRecord = localStorage.getItem('tronRecord') ? parseInt(localStorage.getI
 let tournamentScore = [0, 0];
 let tournamentTarget = 3;
 let tournamentActive = false;
-
 let survivalEnemies = [];
+
+// ========== ЗВУК ==========
+let bgMusic = null;
+let crashSound = null;
+let soundEnabled = true;
+
+function initSound() {
+    try {
+        bgMusic = new Audio('tron-music.mp3');
+        bgMusic.loop = true;
+        bgMusic.volume = 0.4;
+        crashSound = new Audio('crash.mp3');
+        crashSound.volume = 0.6;
+    } catch(e) { console.log('Sound not loaded'); }
+}
+
+function playBgMusic() {
+    if (bgMusic && soundEnabled && bgMusic.paused) {
+        bgMusic.play().catch(e => console.log('Autoplay blocked'));
+    }
+}
+
+function stopBgMusic() {
+    if (bgMusic) {
+        bgMusic.pause();
+        bgMusic.currentTime = 0;
+    }
+}
+
+function playCrashSound() {
+    if (crashSound && soundEnabled) {
+        crashSound.currentTime = 0;
+        crashSound.play().catch(e => console.log('Sound error'));
+    }
+}
+
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    const btn = document.getElementById('soundToggle');
+    if (soundEnabled) {
+        btn.textContent = '🔊';
+        playBgMusic();
+    } else {
+        btn.textContent = '🔇';
+        stopBgMusic();
+    }
+}
 
 const players = [
     { color: '#00ffff', name: 'Синий', x: 5, y: Math.floor(HEIGHT / 2), dirX: 1, dirY: 0, trail: [], alive: true, score: 0 },
     { color: '#ffaa00', name: 'Оранжевый', x: WIDTH - 6, y: Math.floor(HEIGHT / 2), dirX: -1, dirY: 0, trail: [], alive: true, score: 0 }
 ];
 
-// ========== ГОЛОС ==========
 let ttsVoice = null;
 function loadTTSVoice() {
     const voices = window.speechSynthesis.getVoices();
@@ -152,7 +197,6 @@ function aiMove() {
     p.dirY = bestDir.dy;
 }
 
-// ========== ВЫЖИВАНИЕ (3 врага, активная охота) ==========
 function spawnSurvivalEnemies() {
     survivalEnemies = [];
     const spawnPoints = [
@@ -164,8 +208,7 @@ function spawnSurvivalEnemies() {
         let sp = spawnPoints[i];
         survivalEnemies.push({
             x: sp.x, y: sp.y, dirX: sp.dirX, dirY: sp.dirY,
-            trail: [{ x: sp.x, y: sp.y }], alive: true, color: '#ff5555',
-            lastDirChange: 0
+            trail: [{ x: sp.x, y: sp.y }], alive: true, color: '#ff5555'
         });
     }
 }
@@ -175,8 +218,6 @@ function updateSurvival() {
     for (let i = 0; i < survivalEnemies.length; i++) {
         let e = survivalEnemies[i];
         if (!e.alive) continue;
-        
-        // Агрессивный ИИ: выбираем направление, ближайшее к игроку
         let bestDir = null;
         let bestDist = Infinity;
         const dirs = [
@@ -268,6 +309,7 @@ function initGame() {
             clearInterval(countdownInterval);
             document.getElementById('gameMessage').textContent = '';
             gameActive = true; countdownActive = false; paused = false;
+            playBgMusic();
             if (gameLoop) clearInterval(gameLoop);
             gameLoop = setInterval(() => {
                 if (paused || !gameActive) return;
@@ -289,15 +331,15 @@ function updateGame() {
     updateParticles();
     for (let p of players) {
         if (!p.alive) continue;
-        if (p.x < 0 || p.x >= WIDTH || p.y < 0 || p.y >= HEIGHT) { p.alive = false; crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 }; continue; }
+        if (p.x < 0 || p.x >= WIDTH || p.y < 0 || p.y >= HEIGHT) { p.alive = false; crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 }; playCrashSound(); continue; }
         for (let i = 0; i < p.trail.length - 1; i++) {
-            if (p.trail[i].x === p.x && p.trail[i].y === p.y) { p.alive = false; crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 }; break; }
+            if (p.trail[i].x === p.x && p.trail[i].y === p.y) { p.alive = false; crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 }; playCrashSound(); break; }
         }
         if (p.alive) {
             for (let other of players) {
                 if (other === p || !other.alive) continue;
                 for (let seg of other.trail) {
-                    if (seg.x === p.x && seg.y === p.y) { p.alive = false; crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 }; break; }
+                    if (seg.x === p.x && seg.y === p.y) { p.alive = false; crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 }; playCrashSound(); break; }
                 }
                 if (!p.alive) break;
             }
@@ -319,12 +361,14 @@ function updateGame() {
         showVictory(winner.name);
         updateUI(); draw();
         showMessage(`${winner.name} победил! Нажмите ИГРАТЬ`);
+        stopBgMusic();
         return;
     }
-    if (alivePlayers.length === 0 && opponentType !== 'survival') { gameActive = false; showMessage('Ничья!'); return; }
+    if (alivePlayers.length === 0 && opponentType !== 'survival') { gameActive = false; showMessage('Ничья!'); stopBgMusic(); return; }
     if (opponentType === 'survival' && !players[0].alive) {
         gameActive = false;
         showMessage('ВЫ ПРОИГРАЛИ! Нажмите ИГРАТЬ');
+        stopBgMusic();
         return;
     }
     currentSteps++;
@@ -406,7 +450,6 @@ function updateUI() {
 }
 function showMessage(msg) { document.getElementById('gameMessage').innerText = msg; }
 
-// ========== УПРАВЛЕНИЕ ==========
 function setActiveButton(group, activeId) {
     const buttons = document.querySelectorAll(group);
     buttons.forEach(btn => btn.classList.remove('active'));
@@ -446,6 +489,7 @@ document.getElementById('matchTournament').addEventListener('click', () => {
 document.getElementById('playButton').addEventListener('click', () => {
     resetGame();
 });
+document.getElementById('soundToggle').addEventListener('click', toggleSound);
 
 window.addEventListener('DOMContentLoaded', () => {
     setActiveButton('.mode-selector .mode-btn', 'opponent2p');
@@ -453,6 +497,7 @@ window.addEventListener('DOMContentLoaded', () => {
     opponentType = '2p';
     matchMode = 'classic';
     tournamentActive = false;
+    initSound();
 });
 
 document.addEventListener('keydown', (e) => {
@@ -473,5 +518,6 @@ document.addEventListener('keydown', (e) => {
 });
 
 document.getElementById('player2-controls').style.opacity = opponentType === '2p' ? '1' : '0.5';
+initSound();
 showMessage('Выберите противника и режим матча, затем нажмите ИГРАТЬ');
 draw();
