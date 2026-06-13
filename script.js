@@ -56,17 +56,18 @@ function drawParticles() {
     ctx.globalAlpha = 1;
 }
 
-// ========== УМНЫЙ ИИ ==========
+// ========== УМНЫЙ, АГРЕССИВНЫЙ, НЕПРЕДСКАЗУЕМЫЙ ИИ ==========
 function aiMove() {
     if (gameMode !== 'ai') return;
     if (!players[1].alive) return;
     
     const p = players[1];
+    const enemy = players[0];
     const dirs = [
-        { dx: 0, dy: -1 },
-        { dx: 0, dy: 1 },
-        { dx: -1, dy: 0 },
-        { dx: 1, dy: 0 }
+        { dx: 0, dy: -1 }, // вверх
+        { dx: 0, dy: 1 },  // вниз
+        { dx: -1, dy: 0 }, // влево
+        { dx: 1, dy: 0 }   // вправо
     ];
     
     function isSafe(x, y, selfTrail, opponentTrail) {
@@ -80,14 +81,18 @@ function aiMove() {
         return true;
     }
     
-    let bestDir = null;
-    let bestScore = -1;
+    let moveScores = [];
     
     for (const dir of dirs) {
         let newX = p.x + dir.dx;
         let newY = p.y + dir.dy;
-        if (!isSafe(newX, newY, p.trail, players[0].trail)) continue;
         
+        if (!isSafe(newX, newY, p.trail, enemy.trail)) {
+            moveScores.push({ dir: dir, score: -999 });
+            continue;
+        }
+        
+        // Симуляция 30 шагов вперёд
         let simX = newX;
         let simY = newY;
         let simTrail = [...p.trail, { x: simX, y: simY }];
@@ -98,16 +103,16 @@ function aiMove() {
         
         for (let step = 0; step < maxSteps; step++) {
             const possibleMoves = [
-                { dx: simDirX, dy: simDirY },
-                { dx: -simDirY, dy: simDirX },
-                { dx: simDirY, dy: -simDirX },
-                { dx: -simDirX, dy: -simDirY }
+                { dx: simDirX, dy: simDirY },           // прямо
+                { dx: -simDirY, dy: simDirX },          // налево
+                { dx: simDirY, dy: -simDirX },          // направо
+                { dx: -simDirX, dy: -simDirY }          // разворот
             ];
             let moved = false;
             for (const move of possibleMoves) {
                 const nextX = simX + move.dx;
                 const nextY = simY + move.dy;
-                if (isSafe(nextX, nextY, simTrail, players[0].trail)) {
+                if (isSafe(nextX, nextY, simTrail, enemy.trail)) {
                     simX = nextX;
                     simY = nextY;
                     simDirX = move.dx;
@@ -121,16 +126,23 @@ function aiMove() {
             if (!moved) break;
         }
         
-        if (steps > bestScore) {
-            bestScore = steps;
-            bestDir = dir;
-        }
+        // Агрессия: чем ближе к врагу, тем лучше
+        const distToEnemy = Math.abs(simX - enemy.x) + Math.abs(simY - enemy.y);
+        const aggressionBonus = (maxSteps - distToEnemy) * 2;
+        
+        // Случайность: добавляем шум чтобы бот не ходил одинаково
+        const randomBonus = Math.floor(Math.random() * 7) - 3;
+        
+        const totalScore = steps * 10 + aggressionBonus + randomBonus;
+        moveScores.push({ dir: dir, score: totalScore });
     }
     
-    if (bestDir) {
-        p.dirX = bestDir.dx;
-        p.dirY = bestDir.dy;
-    }
+    // Выбираем направление с максимальным счётом
+    moveScores.sort((a, b) => b.score - a.score);
+    const bestDir = moveScores[0].dir;
+    
+    p.dirX = bestDir.dx;
+    p.dirY = bestDir.dy;
 }
 
 function initGame() {
