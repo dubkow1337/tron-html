@@ -199,7 +199,6 @@ canvas {
     white-space: nowrap;
 }
 
-/* victory overlay */
 .victory-overlay {
     position: absolute;
     top: 0;
@@ -231,6 +230,7 @@ canvas {
     text-align: center;
 }
 
+/* Кнопки режимов — тёмные по умолчанию */
 .mode-btn {
     display: block;
     width: 100%;
@@ -252,6 +252,7 @@ canvas {
     box-shadow: 0 0 10px #00ffff;
 }
 
+/* Активная кнопка режима — яркая, залитая */
 .mode-btn.active {
     background: #00aaff;
     color: #010308;
@@ -290,7 +291,6 @@ canvas {
     color: #000;
 }
 
-/* fade-in анимация */
 .fade-in {
     animation: fadeSlideIn 0.5s ease forwards;
     opacity: 0;
