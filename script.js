@@ -6,7 +6,7 @@ const WIDTH = canvas.width / CELL_SIZE;
 const HEIGHT = canvas.height / CELL_SIZE;
 let MOVE_INTERVAL = 120;
 
-let gameMode = '2p';
+let gameMode = '2p';      // '2p', 'ai', 'survival', 'tournament'
 let gameLoop = null;
 let gameActive = true;
 let winner = null;
@@ -18,10 +18,12 @@ let particles = [];
 let currentSteps = 0;
 let bestRecord = localStorage.getItem('tronRecord') ? parseInt(localStorage.getItem('tronRecord')) : 0;
 
+// Турнир
 let tournamentScore = [0, 0];
 let tournamentTarget = 3;
 let tournamentActive = false;
 
+// Выживание
 let survivalEnemies = [];
 let survivalSpawnCounter = 0;
 
@@ -152,7 +154,6 @@ function aiMove() {
     p.dirY = bestDir.dy;
 }
 
-// ========== ВЫЖИВАНИЕ (исправленное) ==========
 function isCellFreeForSpawn(x, y) {
     if (x < 1 || x >= WIDTH-1 || y < 1 || y >= HEIGHT-1) return false;
     if (players[0].x === x && players[0].y === y) return false;
@@ -410,11 +411,48 @@ function updateUI() {
 }
 function showMessage(msg) { document.getElementById('gameMessage').innerText = msg; }
 
-document.getElementById('mode2p').addEventListener('click', () => { gameMode = '2p'; resetGame(); });
-document.getElementById('modeAI').addEventListener('click', () => { gameMode = 'ai'; resetGame(); });
-document.getElementById('modeSurvival').addEventListener('click', () => { gameMode = 'survival'; tournamentActive = false; resetGame(); });
-document.getElementById('modeTournament').addEventListener('click', () => { gameMode = 'tournament'; tournamentScore = [0,0]; tournamentActive = true; resetGame(); });
-document.getElementById('playButton').addEventListener('click', () => resetGame());
+// ========== ПОДСВЕТКА РЕЖИМОВ (без автоматического запуска) ==========
+function setActiveModeButton(activeId) {
+    const buttons = ['mode2p', 'modeAI', 'modeSurvival', 'modeTournament'];
+    buttons.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            if (id === activeId) btn.classList.add('active');
+            else btn.classList.remove('active');
+        }
+    });
+}
+
+document.getElementById('mode2p').addEventListener('click', () => {
+    gameMode = '2p';
+    tournamentActive = false;
+    setActiveModeButton('mode2p');
+    showMessage('Режим: 2 игрока. Нажмите ИГРАТЬ');
+});
+document.getElementById('modeAI').addEventListener('click', () => {
+    gameMode = 'ai';
+    tournamentActive = false;
+    setActiveModeButton('modeAI');
+    showMessage('Режим: VS AI. Нажмите ИГРАТЬ');
+});
+document.getElementById('modeSurvival').addEventListener('click', () => {
+    gameMode = 'survival';
+    tournamentActive = false;
+    setActiveModeButton('modeSurvival');
+    showMessage('Режим: ВЫЖИВАНИЕ. Нажмите ИГРАТЬ');
+});
+document.getElementById('modeTournament').addEventListener('click', () => {
+    gameMode = 'tournament';
+    tournamentScore = [0, 0];
+    tournamentActive = true;
+    setActiveModeButton('modeTournament');
+    showMessage('Режим: ТУРНИР до 3 побед. Нажмите ИГРАТЬ');
+});
+
+// Запуск игры ТОЛЬКО по кнопке ИГРАТЬ
+document.getElementById('playButton').addEventListener('click', () => {
+    resetGame();
+});
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { e.preventDefault(); if (!gameActive || countdownActive) return; paused = !paused; draw(); }
@@ -434,4 +472,5 @@ document.addEventListener('keydown', (e) => {
 });
 
 document.getElementById('player2-controls').style.opacity = '1';
+setActiveModeButton('mode2p');
 initGame();
