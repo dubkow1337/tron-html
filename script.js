@@ -6,7 +6,7 @@ const WIDTH = canvas.width / CELL_SIZE;
 const HEIGHT = canvas.height / CELL_SIZE;
 const MOVE_INTERVAL = 120;
 
-let gameMode = '2p'; // '2p' или 'ai'
+let gameMode = '2p';
 let gameLoop = null;
 let gameActive = true;
 let winner = null;
@@ -52,7 +52,6 @@ function aiMove() {
     }
 }
 
-// Сброс игры
 function initGame() {
     players[0].x = 5;
     players[0].y = Math.floor(HEIGHT / 2);
@@ -73,20 +72,20 @@ function initGame() {
     countdownActive = true;
     countdownValue = 3;
     crashEffect.active = false;
-    document.getElementById('message').textContent = '3...';
+    document.getElementById('gameMessage').textContent = '3...';
     draw();
     
     const countdownInterval = setInterval(() => {
         countdownValue--;
         if (countdownValue > 0) {
-            document.getElementById('message').textContent = countdownValue + '...';
+            document.getElementById('gameMessage').textContent = countdownValue + '...';
             draw();
         } else if (countdownValue === 0) {
-            document.getElementById('message').textContent = 'GO!';
+            document.getElementById('gameMessage').textContent = 'GO!';
             draw();
         } else {
             clearInterval(countdownInterval);
-            document.getElementById('message').textContent = '';
+            document.getElementById('gameMessage').textContent = '';
             gameActive = true;
             countdownActive = false;
             
@@ -161,14 +160,12 @@ function resetGame() {
     initGame();
 }
 
-// НОВАЯ ОТРИСОВКА (ВИЗУАЛ 1-4)
 function draw() {
-    // Очистка и фон
     ctx.fillStyle = '#03050a';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // --- 2. Отрисовка трассы (Стильная кибер-сетка) ---
-    ctx.shadowBlur = 0; // Сетку рисуем без свечения, чтобы не мешать
+    // Сетка
+    ctx.shadowBlur = 0;
     ctx.strokeStyle = '#0f3f3a';
     ctx.lineWidth = 1;
     for (let i = 0; i <= WIDTH; i++) {
@@ -182,12 +179,11 @@ function draw() {
         ctx.stroke();
     }
     
-    // --- 3. Динамические следы с затуханием ---
+    // Следы
     for (let p of players) {
         const trailLength = p.trail.length;
         for (let i = 0; i < trailLength; i++) {
-            const intensity = 0.2 + (i / trailLength) * 0.6; // Яркость нарастает к голове
-            
+            const intensity = 0.2 + (i / trailLength) * 0.6;
             ctx.shadowBlur = 8;
             ctx.shadowColor = p.color;
             ctx.fillStyle = p.color;
@@ -197,7 +193,7 @@ function draw() {
     }
     ctx.globalAlpha = 1;
     
-    // --- 4. Эффект вспышки при столкновении ---
+    // Вспышка
     if (crashEffect.active) {
         ctx.shadowBlur = 15;
         ctx.shadowColor = '#ffffff';
@@ -207,8 +203,7 @@ function draw() {
         if (crashEffect.timer <= 0) crashEffect.active = false;
     }
     
-    // --- 1. Живые игроки с мощным пульсирующим неоном ---
-    const pulse = (Date.now() / 200) % 1; // Пульсация для эффекта живого света
+    // Живые игроки
     for (let p of players) {
         if (p.alive) {
             ctx.shadowBlur = 15 + 5 * Math.sin(Date.now() * 0.01);
@@ -218,7 +213,7 @@ function draw() {
         }
     }
     
-    // --- 4. Визуальный обратный отсчет с анимацией ---
+    // Обратный отсчёт
     if (countdownActive) {
         ctx.font = 'bold 64px "Courier New"';
         ctx.shadowBlur = 20;
@@ -235,25 +230,24 @@ function draw() {
             ctx.restore();
         }
     }
-    
     ctx.shadowBlur = 0;
 }
 
 function updateUI() {
-    document.querySelector('.player1-score').textContent = players[0].score;
-    document.querySelector('.player2-score').textContent = players[1].score;
+    document.getElementById('player1Score').textContent = players[0].score;
+    document.getElementById('player2Score').textContent = players[1].score;
 }
 
 function showMessage(msg) {
-    const msgDiv = document.getElementById('message');
+    const msgDiv = document.getElementById('gameMessage');
     msgDiv.textContent = msg;
     setTimeout(() => {
-        if (!gameActive && winner === null) msgDiv.textContent = 'Нажмите Пробел';
-        else if (!gameActive && winner) msgDiv.textContent = `${winner.name} победил! Пробел — дальше`;
+        if (!gameActive && winner === null) msgDiv.textContent = 'Нажмите ИГРАТЬ';
+        else if (!gameActive && winner) msgDiv.textContent = `${winner.name} победил! Нажмите ИГРАТЬ`;
     }, 2000);
 }
 
-// --- Переключение режимов и управление (осталось без изменений) ---
+// Переключение режимов
 document.getElementById('mode2p').addEventListener('click', () => {
     gameMode = '2p';
     document.getElementById('mode2p').classList.add('active');
@@ -270,9 +264,14 @@ document.getElementById('modeAI').addEventListener('click', () => {
     resetGame();
 });
 
+// Кнопка Play вместо пробела
+document.getElementById('playButton').addEventListener('click', () => {
+    resetGame();
+});
+
+// Управление
 document.addEventListener('keydown', (e) => {
     const key = e.key;
-    if (key === ' ' || key === 'Space') { e.preventDefault(); resetGame(); return; }
     if (!gameActive) return;
     
     if (players[0].alive) {
