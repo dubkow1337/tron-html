@@ -6,8 +6,8 @@ const WIDTH = canvas.width / CELL_SIZE;
 const HEIGHT = canvas.height / CELL_SIZE;
 let MOVE_INTERVAL = 120;
 
-let gameMode = '2p';      // '2p', 'ai', 'survival', 'tournament'
-let currentArena = 'classic';
+let opponentType = '2p';      // '2p', 'ai', 'survival'
+let matchMode = 'classic';    // 'classic', 'tournament'
 let gameLoop = null;
 let gameActive = true;
 let winner = null;
@@ -99,7 +99,7 @@ function isSafe(x, y, selfTrail, opponentTrail) {
 }
 
 function aiMove() {
-    if (gameMode !== 'ai') return;
+    if (opponentType !== 'ai') return;
     if (!players[1].alive) return;
     const p = players[1];
     const enemy = players[0];
@@ -152,36 +152,38 @@ function aiMove() {
     p.dirY = bestDir.dy;
 }
 
-// ========== ВЫЖИВАНИЕ: 3 врага в разных углах, умные ==========
+// ========== ВЫЖИВАНИЕ (3 врага, активная охота) ==========
 function spawnSurvivalEnemies() {
     survivalEnemies = [];
     const spawnPoints = [
-        { x: 2, y: 2, dirX: 1, dirY: 0 },
-        { x: WIDTH - 3, y: 2, dirX: -1, dirY: 0 },
-        { x: 2, y: HEIGHT - 3, dirX: 1, dirY: 0 }
+        { x: 3, y: 3, dirX: 1, dirY: 0 },
+        { x: WIDTH - 4, y: 3, dirX: -1, dirY: 0 },
+        { x: 3, y: HEIGHT - 4, dirX: 1, dirY: 0 }
     ];
     for (let i = 0; i < 3; i++) {
         let sp = spawnPoints[i];
         survivalEnemies.push({
             x: sp.x, y: sp.y, dirX: sp.dirX, dirY: sp.dirY,
-            trail: [{ x: sp.x, y: sp.y }], alive: true, color: '#ff5555'
+            trail: [{ x: sp.x, y: sp.y }], alive: true, color: '#ff5555',
+            lastDirChange: 0
         });
     }
 }
 
 function updateSurvival() {
-    if (gameMode !== 'survival') return;
+    if (opponentType !== 'survival') return;
     for (let i = 0; i < survivalEnemies.length; i++) {
         let e = survivalEnemies[i];
         if (!e.alive) continue;
         
-        // Поиск безопасного направления
-        let possibleDirs = [
+        // Агрессивный ИИ: выбираем направление, ближайшее к игроку
+        let bestDir = null;
+        let bestDist = Infinity;
+        const dirs = [
             { dx: 0, dy: -1 }, { dx: 0, dy: 1 },
             { dx: -1, dy: 0 }, { dx: 1, dy: 0 }
         ];
-        let safeDirs = [];
-        for (let dir of possibleDirs) {
+        for (let dir of dirs) {
             let nx = e.x + dir.dx;
             let ny = e.y + dir.dy;
             if (nx < 1 || nx >= WIDTH-1 || ny < 1 || ny >= HEIGHT-1) continue;
@@ -189,24 +191,24 @@ function updateSurvival() {
             for (let seg of e.trail) {
                 if (seg.x === nx && seg.y === ny) { safe = false; break; }
             }
-            for (let seg of players[0].trail) {
-                if (seg.x === nx && seg.y === ny) { safe = false; break; }
+            if (!safe) continue;
+            let dist = Math.abs(nx - players[0].x) + Math.abs(ny - players[0].y);
+            if (dist < bestDist) {
+                bestDist = dist;
+                bestDir = dir;
             }
-            if (safe) safeDirs.push(dir);
         }
-        if (safeDirs.length) {
-            let chosen = safeDirs[Math.floor(Math.random() * safeDirs.length)];
-            e.dirX = chosen.dx;
-            e.dirY = chosen.dy;
+        if (bestDir) {
+            e.dirX = bestDir.dx;
+            e.dirY = bestDir.dy;
         }
         e.x += e.dirX;
         e.y += e.dirY;
         e.trail.push({ x: e.x, y: e.y });
         if (e.x === players[0].x && e.y === players[0].y) players[0].alive = false;
-        if (e.trail.length > 100) e.trail.shift();
+        if (e.trail.length > 150) e.trail.shift();
     }
     survivalEnemies = survivalEnemies.filter(e => e.alive);
-    // Если все враги умерли — респавним 3 новых
     if (survivalEnemies.length === 0) {
         spawnSurvivalEnemies();
     }
@@ -217,7 +219,7 @@ function showVictory(name) {
     overlay.innerText = `${name.toUpperCase()} ПОБЕДИЛ!`;
     overlay.classList.add('show');
     setTimeout(() => overlay.classList.remove('show'), 2000);
-    if (gameMode === 'tournament') {
+    if (matchMode === 'tournament') {
         if (name === 'Синий') tournamentScore[0]++;
         else if (name === 'Оранжевый') tournamentScore[1]++;
         updateUI();
@@ -249,7 +251,7 @@ function initGame() {
     players[1].dirX = -1; players[1].dirY = 0;
     players[1].trail = [{ x: players[1].x, y: players[1].y }];
     players[1].alive = true;
-    if (gameMode === 'survival') {
+    if (opponentType === 'survival') {
         spawnSurvivalEnemies();
         players[1].alive = false;
     }
@@ -282,7 +284,7 @@ function initGame() {
 function updateGame() {
     if (!gameActive) return;
     for (let p of players) if (p.alive) { p.x += p.dirX; p.y += p.dirY; p.trail.push({ x: p.x, y: p.y }); addParticles(p.x, p.y, p.color); }
-    if (gameMode === 'survival') updateSurvival();
+    if (opponentType === 'survival') updateSurvival();
     else aiMove();
     updateParticles();
     for (let p of players) {
@@ -301,8 +303,15 @@ function updateGame() {
             }
         }
     }
+    for (let e of survivalEnemies) {
+        if (!e.alive) continue;
+        if (e.x < 0 || e.x >= WIDTH || e.y < 0 || e.y >= HEIGHT) e.alive = false;
+        for (let i = 0; i < e.trail.length - 1; i++) {
+            if (e.trail[i].x === e.x && e.trail[i].y === e.y) { e.alive = false; break; }
+        }
+    }
     const alivePlayers = players.filter(p => p.alive);
-    if (alivePlayers.length === 1) {
+    if (alivePlayers.length === 1 && opponentType !== 'survival') {
         let winnerIdx = players.findIndex(p => p.alive);
         players[winnerIdx].score++;
         winner = players[winnerIdx];
@@ -312,7 +321,12 @@ function updateGame() {
         showMessage(`${winner.name} победил! Нажмите ИГРАТЬ`);
         return;
     }
-    if (alivePlayers.length === 0) { gameActive = false; showMessage('Ничья!'); return; }
+    if (alivePlayers.length === 0 && opponentType !== 'survival') { gameActive = false; showMessage('Ничья!'); return; }
+    if (opponentType === 'survival' && !players[0].alive) {
+        gameActive = false;
+        showMessage('ВЫ ПРОИГРАЛИ! Нажмите ИГРАТЬ');
+        return;
+    }
     currentSteps++;
     updateUI(); draw();
 }
@@ -386,54 +400,47 @@ function draw() {
 }
 
 function updateUI() {
-    document.getElementById('player1Score').innerText = gameMode === 'tournament' ? tournamentScore[0] : players[0].score;
-    document.getElementById('player2Score').innerText = gameMode === 'tournament' ? tournamentScore[1] : players[1].score;
-    if (gameMode === 'survival') document.getElementById('player2Score').innerText = survivalEnemies.length;
+    document.getElementById('player1Score').innerText = matchMode === 'tournament' ? tournamentScore[0] : players[0].score;
+    document.getElementById('player2Score').innerText = matchMode === 'tournament' ? tournamentScore[1] : players[1].score;
+    if (opponentType === 'survival') document.getElementById('player2Score').innerText = survivalEnemies.length;
 }
 function showMessage(msg) { document.getElementById('gameMessage').innerText = msg; }
 
-// ========== НЕЗАВИСИМЫЙ ВЫБОР РЕЖИМА И АРЕНЫ ==========
-function setActiveButton(buttonId) {
-    const groups = ['mode2p', 'modeAI', 'modeSurvival', 'modeTournament', 'arenaClassic'];
-    groups.forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) {
-            if (id === buttonId) btn.classList.add('active');
-            else btn.classList.remove('active');
-        }
-    });
+// ========== УПРАВЛЕНИЕ ==========
+function setActiveButton(group, activeId) {
+    const buttons = document.querySelectorAll(group);
+    buttons.forEach(btn => btn.classList.remove('active'));
+    document.getElementById(activeId).classList.add('active');
 }
 
-document.getElementById('mode2p').addEventListener('click', () => {
-    gameMode = '2p';
-    tournamentActive = false;
-    setActiveButton('mode2p');
-    showMessage('Режим: 2 игрока. Нажмите ИГРАТЬ');
+document.getElementById('opponent2p').addEventListener('click', () => {
+    opponentType = '2p';
+    setActiveButton('.mode-selector .mode-btn', 'opponent2p');
+    showMessage('Противник: 2 игрока. Выберите режим матча и нажмите ИГРАТЬ');
 });
-document.getElementById('modeAI').addEventListener('click', () => {
-    gameMode = 'ai';
-    tournamentActive = false;
-    setActiveButton('modeAI');
-    showMessage('Режим: VS AI. Нажмите ИГРАТЬ');
+document.getElementById('opponentAI').addEventListener('click', () => {
+    opponentType = 'ai';
+    setActiveButton('.mode-selector .mode-btn', 'opponentAI');
+    showMessage('Противник: VS AI. Выберите режим матча и нажмите ИГРАТЬ');
 });
-document.getElementById('modeSurvival').addEventListener('click', () => {
-    gameMode = 'survival';
-    tournamentActive = false;
-    setActiveButton('modeSurvival');
-    showMessage('Режим: ВЫЖИВАНИЕ. Нажмите ИГРАТЬ');
-});
-document.getElementById('modeTournament').addEventListener('click', () => {
-    gameMode = 'tournament';
-    tournamentScore = [0, 0];
-    tournamentActive = true;
-    setActiveButton('modeTournament');
-    showMessage('Режим: ТУРНИР до 3 побед. Нажмите ИГРАТЬ');
+document.getElementById('opponentSurvival').addEventListener('click', () => {
+    opponentType = 'survival';
+    setActiveButton('.mode-selector .mode-btn', 'opponentSurvival');
+    showMessage('Противник: ВЫЖИВАНИЕ. Выберите режим матча и нажмите ИГРАТЬ');
 });
 
-document.getElementById('arenaClassic').addEventListener('click', () => {
-    currentArena = 'classic';
-    setActiveButton('arenaClassic');
-    showMessage('Арена: Классическая');
+document.getElementById('matchClassic').addEventListener('click', () => {
+    matchMode = 'classic';
+    setActiveButton('.arena-selector .mode-btn', 'matchClassic');
+    tournamentActive = false;
+    showMessage('Режим матча: Классика (до 1 победы)');
+});
+document.getElementById('matchTournament').addEventListener('click', () => {
+    matchMode = 'tournament';
+    setActiveButton('.arena-selector .mode-btn', 'matchTournament');
+    tournamentScore = [0, 0];
+    tournamentActive = true;
+    showMessage('Режим матча: ТУРНИР до 3 побед');
 });
 
 document.getElementById('playButton').addEventListener('click', () => {
@@ -441,11 +448,11 @@ document.getElementById('playButton').addEventListener('click', () => {
 });
 
 window.addEventListener('DOMContentLoaded', () => {
-    setActiveButton('mode2p');
-    setActiveButton('arenaClassic');
-    gameMode = '2p';
+    setActiveButton('.mode-selector .mode-btn', 'opponent2p');
+    setActiveButton('.arena-selector .mode-btn', 'matchClassic');
+    opponentType = '2p';
+    matchMode = 'classic';
     tournamentActive = false;
-    currentArena = 'classic';
 });
 
 document.addEventListener('keydown', (e) => {
@@ -457,7 +464,7 @@ document.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowLeft' && players[0].dirX !== 1) { players[0].dirX = -1; players[0].dirY = 0; }
         if (e.key === 'ArrowRight' && players[0].dirX !== -1) { players[0].dirX = 1; players[0].dirY = 0; }
     }
-    if (gameMode === '2p' && players[1].alive) {
+    if (opponentType === '2p' && players[1].alive) {
         if (e.key === 'w' && players[1].dirY !== 1) { players[1].dirX = 0; players[1].dirY = -1; }
         if (e.key === 's' && players[1].dirY !== -1) { players[1].dirX = 0; players[1].dirY = 1; }
         if (e.key === 'a' && players[1].dirX !== 1) { players[1].dirX = -1; players[1].dirY = 0; }
@@ -465,6 +472,6 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-document.getElementById('player2-controls').style.opacity = '1';
-showMessage('Выберите режим и арену, затем нажмите ИГРАТЬ');
+document.getElementById('player2-controls').style.opacity = opponentType === '2p' ? '1' : '0.5';
+showMessage('Выберите противника и режим матча, затем нажмите ИГРАТЬ');
 draw();
