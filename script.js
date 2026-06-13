@@ -4,9 +4,9 @@ const ctx = canvas.getContext('2d');
 const CELL_SIZE = 20;
 const WIDTH = canvas.width / CELL_SIZE;
 const HEIGHT = canvas.height / CELL_SIZE;
-let MOVE_INTERVAL = 120; // начальная скорость
+let MOVE_INTERVAL = 120;
 
-let gameMode = '2p';      // '2p', 'ai', 'survival', 'tournament'
+let gameMode = '2p';
 let gameLoop = null;
 let gameActive = true;
 let winner = null;
@@ -18,50 +18,19 @@ let particles = [];
 let currentSteps = 0;
 let bestRecord = localStorage.getItem('tronRecord') ? parseInt(localStorage.getItem('tronRecord')) : 0;
 
-// Переменные для турнира
 let tournamentScore = [0, 0];
 let tournamentTarget = 3;
 let tournamentActive = false;
 
-// Переменные для выживания
 let survivalEnemies = [];
 let survivalSpawnCounter = 0;
-
-// Текущая арена
-let currentArena = 'classic';
-let arenas = {
-    classic: { name: 'Классическая', walls: [], color: '#0f3f3a' },
-    narrow: {  // узкие коридоры
-        name: 'Узкие коридоры',
-        walls: [
-            { x: 10, y: 0, w: 1, h: HEIGHT },
-            { x: WIDTH-11, y: 0, w: 1, h: HEIGHT },
-            { x: 0, y: 10, w: WIDTH, h: 1 },
-            { x: 0, y: HEIGHT-11, w: WIDTH, h: 1 },
-            { x: 0, y: HEIGHT/2-2, w: WIDTH, h: 1 },
-            { x: 0, y: HEIGHT/2+2, w: WIDTH, h: 1 }
-        ],
-        color: '#3f0f3a'
-    },
-    obstacles: { // препятствия
-        name: 'Препятствия',
-        walls: [
-            { x: 12, y: 12, w: 5, h: 5 },
-            { x: WIDTH-18, y: 12, w: 5, h: 5 },
-            { x: 12, y: HEIGHT-18, w: 5, h: 5 },
-            { x: WIDTH-18, y: HEIGHT-18, w: 5, h: 5 },
-            { x: WIDTH/2-3, y: 0, w: 6, h: HEIGHT }
-        ],
-        color: '#3f3f0a'
-    }
-};
 
 const players = [
     { color: '#00ffff', name: 'Синий', x: 5, y: Math.floor(HEIGHT / 2), dirX: 1, dirY: 0, trail: [], alive: true, score: 0 },
     { color: '#ffaa00', name: 'Оранжевый', x: WIDTH - 6, y: Math.floor(HEIGHT / 2), dirX: -1, dirY: 0, trail: [], alive: true, score: 0 }
 ];
 
-// ========== ЗАГРУЗЧИК ГОЛОСА ==========
+// ========== ГОЛОС ==========
 let ttsVoice = null;
 function loadTTSVoice() {
     const voices = window.speechSynthesis.getVoices();
@@ -118,16 +87,8 @@ function drawParticles() {
     ctx.globalAlpha = 1;
 }
 
-function isWall(x, y) {
-    if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return true;
-    for (let w of arenas[currentArena].walls) {
-        if (x >= w.x && x < w.x + w.w && y >= w.y && y < w.y + w.h) return true;
-    }
-    return false;
-}
-
 function isSafe(x, y, selfTrail, opponentTrail) {
-    if (isWall(x, y)) return false;
+    if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return false;
     for (let i = 0; i < selfTrail.length - 1; i++) {
         if (selfTrail[i].x === x && selfTrail[i].y === y) return false;
     }
@@ -191,28 +152,45 @@ function aiMove() {
     p.dirY = bestDir.dy;
 }
 
+// ========== ВЫЖИВАНИЕ (исправленное) ==========
+function isCellFreeForSpawn(x, y) {
+    if (x < 1 || x >= WIDTH-1 || y < 1 || y >= HEIGHT-1) return false;
+    if (players[0].x === x && players[0].y === y) return false;
+    for (let e of survivalEnemies) {
+        if (e.x === x && e.y === y) return false;
+    }
+    return true;
+}
+
 function spawnSurvivalEnemy() {
-    let side = Math.floor(Math.random() * 4);
-    let x, y;
-    if (side === 0) { x = 1; y = Math.floor(Math.random() * HEIGHT); }
-    else if (side === 1) { x = WIDTH - 2; y = Math.floor(Math.random() * HEIGHT); }
-    else if (side === 2) { x = Math.floor(Math.random() * WIDTH); y = 1; }
-    else { x = Math.floor(Math.random() * WIDTH); y = HEIGHT - 2; }
-    let dirX = 0, dirY = 0;
-    if (x === 1) dirX = 1;
-    else if (x === WIDTH-2) dirX = -1;
-    else if (y === 1) dirY = 1;
-    else if (y === HEIGHT-2) dirY = -1;
-    survivalEnemies.push({
-        x: x, y: y, dirX: dirX, dirY: dirY,
-        trail: [{ x: x, y: y }], alive: true, color: '#ff5555'
-    });
+    let attempts = 0;
+    while (attempts < 20) {
+        let side = Math.floor(Math.random() * 4);
+        let x, y;
+        if (side === 0) { x = 1; y = Math.floor(Math.random() * (HEIGHT-2)) + 1; }
+        else if (side === 1) { x = WIDTH - 2; y = Math.floor(Math.random() * (HEIGHT-2)) + 1; }
+        else if (side === 2) { x = Math.floor(Math.random() * (WIDTH-2)) + 1; y = 1; }
+        else { x = Math.floor(Math.random() * (WIDTH-2)) + 1; y = HEIGHT - 2; }
+        if (isCellFreeForSpawn(x, y)) {
+            let dirX = 0, dirY = 0;
+            if (x === 1) dirX = 1;
+            else if (x === WIDTH-2) dirX = -1;
+            else if (y === 1) dirY = 1;
+            else if (y === HEIGHT-2) dirY = -1;
+            survivalEnemies.push({
+                x: x, y: y, dirX: dirX, dirY: dirY,
+                trail: [{ x: x, y: y }], alive: true, color: '#ff5555'
+            });
+            return;
+        }
+        attempts++;
+    }
 }
 
 function updateSurvival() {
     if (gameMode !== 'survival') return;
     survivalSpawnCounter++;
-    if (survivalSpawnCounter > 60) {
+    if (survivalSpawnCounter > 60 && survivalEnemies.length < 8) {
         survivalSpawnCounter = 0;
         spawnSurvivalEnemy();
     }
@@ -225,17 +203,28 @@ function updateSurvival() {
         ];
         let safeDirs = [];
         for (let dir of possibleDirs) {
-            let nx = e.x + dir.dx, ny = e.y + dir.dy;
-            if (isSafe(nx, ny, e.trail, players[0].trail)) safeDirs.push(dir);
+            let nx = e.x + dir.dx;
+            let ny = e.y + dir.dy;
+            if (nx < 1 || nx >= WIDTH-1 || ny < 1 || ny >= HEIGHT-1) continue;
+            let safe = true;
+            for (let seg of e.trail) {
+                if (seg.x === nx && seg.y === ny) { safe = false; break; }
+            }
+            for (let seg of players[0].trail) {
+                if (seg.x === nx && seg.y === ny) { safe = false; break; }
+            }
+            if (safe) safeDirs.push(dir);
         }
         if (safeDirs.length) {
             let chosen = safeDirs[Math.floor(Math.random() * safeDirs.length)];
-            e.dirX = chosen.dx; e.dirY = chosen.dy;
+            e.dirX = chosen.dx;
+            e.dirY = chosen.dy;
         }
-        e.x += e.dirX; e.y += e.dirY;
+        e.x += e.dirX;
+        e.y += e.dirY;
         e.trail.push({ x: e.x, y: e.y });
-        if (!isSafe(e.x, e.y, e.trail, players[0].trail)) e.alive = false;
         if (e.x === players[0].x && e.y === players[0].y) players[0].alive = false;
+        if (e.trail.length > 100) e.trail.shift();
     }
     survivalEnemies = survivalEnemies.filter(e => e.alive);
 }
@@ -258,11 +247,13 @@ function showVictory(name) {
         }
         resetGame();
         showMessage(`Счёт турнира: ${tournamentScore[0]} : ${tournamentScore[1]} (до ${tournamentTarget})`);
+        return;
     }
     if (currentSteps > bestRecord) {
         bestRecord = currentSteps;
         localStorage.setItem('tronRecord', bestRecord);
         document.getElementById('recordDisplay').innerText = bestRecord;
+        showMessage(`🏆 НОВЫЙ РЕКОРД: ${bestRecord} шагов!`);
     }
 }
 
@@ -275,7 +266,6 @@ function initGame() {
     players[1].dirX = -1; players[1].dirY = 0;
     players[1].trail = [{ x: players[1].x, y: players[1].y }];
     players[1].alive = true;
-    players[1].score = 0;
     if (gameMode === 'survival') {
         survivalEnemies = [];
         survivalSpawnCounter = 0;
@@ -315,7 +305,7 @@ function updateGame() {
     updateParticles();
     for (let p of players) {
         if (!p.alive) continue;
-        if (isWall(p.x, p.y)) { p.alive = false; crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 }; continue; }
+        if (p.x < 0 || p.x >= WIDTH || p.y < 0 || p.y >= HEIGHT) { p.alive = false; crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 }; continue; }
         for (let i = 0; i < p.trail.length - 1; i++) {
             if (p.trail[i].x === p.x && p.trail[i].y === p.y) { p.alive = false; crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 }; break; }
         }
@@ -355,15 +345,11 @@ function draw() {
     ctx.fillStyle = '#03050a';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = arenas[currentArena].color;
+    ctx.strokeStyle = '#0f3f3a';
     ctx.lineWidth = 1;
     for (let i = 0; i <= WIDTH; i++) {
         ctx.beginPath(); ctx.moveTo(i * CELL_SIZE, 0); ctx.lineTo(i * CELL_SIZE, canvas.height); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(0, i * CELL_SIZE); ctx.lineTo(canvas.width, i * CELL_SIZE); ctx.stroke();
-    }
-    ctx.fillStyle = '#ff000044';
-    for (let w of arenas[currentArena].walls) {
-        ctx.fillRect(w.x * CELL_SIZE, w.y * CELL_SIZE, w.w * CELL_SIZE, w.h * CELL_SIZE);
     }
     for (let p of players) {
         let trailLength = p.trail.length;
@@ -379,6 +365,8 @@ function draw() {
             ctx.fillStyle = e.color; ctx.globalAlpha = 0.6;
             ctx.fillRect(seg.x * CELL_SIZE, seg.y * CELL_SIZE, CELL_SIZE - 1, CELL_SIZE - 1);
         }
+        ctx.fillStyle = '#ff0000';
+        ctx.fillRect(e.x * CELL_SIZE, e.y * CELL_SIZE, CELL_SIZE - 2, CELL_SIZE - 2);
     }
     ctx.globalAlpha = 1;
     drawParticles();
@@ -389,7 +377,7 @@ function draw() {
         crashEffect.timer--;
         if (crashEffect.timer <= 0) crashEffect.active = false;
     }
-    let blurLevel = Math.min(8, Math.floor(currentSteps / 50));
+    let blurLevel = Math.min(12, Math.floor(currentSteps / 50));
     for (let p of players) {
         if (p.alive) {
             ctx.shadowBlur = 15 + 5 * Math.sin(Date.now() * 0.01) + blurLevel;
@@ -422,8 +410,10 @@ function updateUI() {
 }
 function showMessage(msg) { document.getElementById('gameMessage').innerText = msg; }
 
-document.getElementById('mode2p').addEventListener('click', () => { gameMode = '2p'; currentArena = 'classic'; resetGame(); });
-document.getElementById('modeAI').addEventListener('click', () => { gameMode = 'ai'; currentArena = 'classic'; resetGame(); });
+document.getElementById('mode2p').addEventListener('click', () => { gameMode = '2p'; resetGame(); });
+document.getElementById('modeAI').addEventListener('click', () => { gameMode = 'ai'; resetGame(); });
+document.getElementById('modeSurvival').addEventListener('click', () => { gameMode = 'survival'; tournamentActive = false; resetGame(); });
+document.getElementById('modeTournament').addEventListener('click', () => { gameMode = 'tournament'; tournamentScore = [0,0]; tournamentActive = true; resetGame(); });
 document.getElementById('playButton').addEventListener('click', () => resetGame());
 
 document.addEventListener('keydown', (e) => {
@@ -444,9 +434,4 @@ document.addEventListener('keydown', (e) => {
 });
 
 document.getElementById('player2-controls').style.opacity = '1';
-document.getElementById('arenaClassic').addEventListener('click', () => { currentArena = 'classic'; resetGame(); });
-document.getElementById('arenaNarrow').addEventListener('click', () => { currentArena = 'narrow'; resetGame(); });
-document.getElementById('arenaObstacles').addEventListener('click', () => { currentArena = 'obstacles'; resetGame(); });
-document.getElementById('modeSurvival').addEventListener('click', () => { gameMode = 'survival'; currentArena = 'classic'; tournamentActive = false; resetGame(); });
-document.getElementById('modeTournament').addEventListener('click', () => { gameMode = 'tournament'; tournamentScore = [0,0]; tournamentActive = true; resetGame(); });
 initGame();
