@@ -12,12 +12,14 @@ let gameActive = true;
 let winner = null;
 let countdownActive = false;
 let countdownValue = 3;
+let crashEffect = { active: false, x: 0, y: 0, color: '#ffffff', timer: 0 };
 
 const players = [
     { color: '#00ffff', name: 'Синий', x: 5, y: Math.floor(HEIGHT / 2), dirX: 1, dirY: 0, trail: [], alive: true, score: 0 },
     { color: '#ff00ff', name: 'Красный', x: WIDTH - 6, y: Math.floor(HEIGHT / 2), dirX: -1, dirY: 0, trail: [], alive: true, score: 0 }
 ];
 
+// ИИ
 function aiMove() {
     if (gameMode !== 'ai') return;
     if (!players[1].alive) return;
@@ -50,6 +52,7 @@ function aiMove() {
     }
 }
 
+// Сброс игры
 function initGame() {
     players[0].x = 5;
     players[0].y = Math.floor(HEIGHT / 2);
@@ -69,6 +72,7 @@ function initGame() {
     winner = null;
     countdownActive = true;
     countdownValue = 3;
+    crashEffect.active = false;
     document.getElementById('message').textContent = '3...';
     draw();
     
@@ -101,15 +105,27 @@ function initGame() {
                 
                 for (let p of players) {
                     if (!p.alive) continue;
-                    if (p.x < 0 || p.x >= WIDTH || p.y < 0 || p.y >= HEIGHT) { p.alive = false; continue; }
+                    if (p.x < 0 || p.x >= WIDTH || p.y < 0 || p.y >= HEIGHT) { 
+                        p.alive = false; 
+                        crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
+                        continue; 
+                    }
                     for (let i = 0; i < p.trail.length - 1; i++) {
-                        if (p.trail[i].x === p.x && p.trail[i].y === p.y) { p.alive = false; break; }
+                        if (p.trail[i].x === p.x && p.trail[i].y === p.y) { 
+                            p.alive = false; 
+                            crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
+                            break; 
+                        }
                     }
                     if (p.alive) {
                         for (let other of players) {
                             if (other === p || !other.alive) continue;
                             for (let seg of other.trail) {
-                                if (seg.x === p.x && seg.y === p.y) { p.alive = false; break; }
+                                if (seg.x === p.x && seg.y === p.y) { 
+                                    p.alive = false; 
+                                    crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
+                                    break; 
+                                }
                             }
                             if (!p.alive) break;
                         }
@@ -145,10 +161,16 @@ function resetGame() {
     initGame();
 }
 
+// НОВАЯ ОТРИСОВКА (ВИЗУАЛ 1-4)
 function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = '#0f1f2f';
-    ctx.lineWidth = 0.5;
+    // Очистка и фон
+    ctx.fillStyle = '#03050a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // --- 2. Отрисовка трассы (Стильная кибер-сетка) ---
+    ctx.shadowBlur = 0; // Сетку рисуем без свечения, чтобы не мешать
+    ctx.strokeStyle = '#0f3f3a';
+    ctx.lineWidth = 1;
     for (let i = 0; i <= WIDTH; i++) {
         ctx.beginPath();
         ctx.moveTo(i * CELL_SIZE, 0);
@@ -159,33 +181,62 @@ function draw() {
         ctx.lineTo(canvas.width, i * CELL_SIZE);
         ctx.stroke();
     }
+    
+    // --- 3. Динамические следы с затуханием ---
     for (let p of players) {
-        for (let i = 0; i < p.trail.length; i++) {
+        const trailLength = p.trail.length;
+        for (let i = 0; i < trailLength; i++) {
+            const intensity = 0.2 + (i / trailLength) * 0.6; // Яркость нарастает к голове
+            
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = p.color;
             ctx.fillStyle = p.color;
-            ctx.globalAlpha = 0.3 + (i / p.trail.length) * 0.7;
+            ctx.globalAlpha = intensity;
             ctx.fillRect(p.trail[i].x * CELL_SIZE, p.trail[i].y * CELL_SIZE, CELL_SIZE - 1, CELL_SIZE - 1);
         }
     }
     ctx.globalAlpha = 1;
+    
+    // --- 4. Эффект вспышки при столкновении ---
+    if (crashEffect.active) {
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#ffffff';
+        ctx.fillStyle = crashEffect.color;
+        ctx.fillRect(crashEffect.x * CELL_SIZE, crashEffect.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+        crashEffect.timer--;
+        if (crashEffect.timer <= 0) crashEffect.active = false;
+    }
+    
+    // --- 1. Живые игроки с мощным пульсирующим неоном ---
+    const pulse = (Date.now() / 200) % 1; // Пульсация для эффекта живого света
     for (let p of players) {
         if (p.alive) {
-            ctx.fillStyle = p.color;
-            ctx.shadowBlur = 12;
+            ctx.shadowBlur = 15 + 5 * Math.sin(Date.now() * 0.01);
             ctx.shadowColor = p.color;
+            ctx.fillStyle = p.color;
             ctx.fillRect(p.x * CELL_SIZE, p.y * CELL_SIZE, CELL_SIZE - 2, CELL_SIZE - 2);
         }
     }
-    ctx.shadowBlur = 0;
-    if (countdownActive && countdownValue > 0) {
-        ctx.font = 'bold 48px "Courier New"';
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowBlur = 0;
-        ctx.fillText(countdownValue, canvas.width / 2 - 20, canvas.height / 2);
-    } else if (countdownActive && countdownValue === 0) {
-        ctx.font = 'bold 48px "Courier New"';
-        ctx.fillStyle = '#00ff00';
-        ctx.fillText('GO!', canvas.width / 2 - 40, canvas.height / 2);
+    
+    // --- 4. Визуальный обратный отсчет с анимацией ---
+    if (countdownActive) {
+        ctx.font = 'bold 64px "Courier New"';
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = '#00ffff';
+        ctx.fillStyle = '#00ffff';
+        let text = countdownValue > 0 ? countdownValue.toString() : '';
+        if (countdownValue === 0) text = 'GO!';
+        if (text) {
+            const scale = 1 + Math.sin(Date.now() * 0.02) * 0.2;
+            ctx.save();
+            ctx.translate(canvas.width/2, canvas.height/2);
+            ctx.scale(scale, scale);
+            ctx.fillText(text, -ctx.measureText(text).width/2, 20);
+            ctx.restore();
+        }
     }
+    
+    ctx.shadowBlur = 0;
 }
 
 function updateUI() {
@@ -202,7 +253,7 @@ function showMessage(msg) {
     }, 2000);
 }
 
-// Переключение режима
+// --- Переключение режимов и управление (осталось без изменений) ---
 document.getElementById('mode2p').addEventListener('click', () => {
     gameMode = '2p';
     document.getElementById('mode2p').classList.add('active');
@@ -219,7 +270,6 @@ document.getElementById('modeAI').addEventListener('click', () => {
     resetGame();
 });
 
-// Управление
 document.addEventListener('keydown', (e) => {
     const key = e.key;
     if (key === ' ' || key === 'Space') { e.preventDefault(); resetGame(); return; }
@@ -240,5 +290,4 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Старт игры
 initGame();
