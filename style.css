@@ -6,95 +6,273 @@
 }
 
 body {
-    background: linear-gradient(145deg, #0a0f1a 0%, #05070c 100%);
+    background: radial-gradient(circle at 20% 30%, #050a14, #010308);
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
     font-family: 'Courier New', monospace;
+    padding: 20px;
 }
 
-.game-container {
-    background: #000000;
-    padding: 12px;
+.tron-container {
+    max-width: 1400px;
+    width: 100%;
+}
+
+/* Шапка в стиле Трон */
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.logo {
+    font-size: 3rem;
+    font-weight: bold;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+}
+
+.red {
+    color: #00ffff;
+    text-shadow: 0 0 20px #00ffff, 0 0 40px #0088ff;
+}
+
+.rabbit {
+    color: #ff00ff;
+    text-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00aa;
+}
+
+.logo-sub {
+    font-size: 0.7rem;
+    letter-spacing: 6px;
+    color: #00aaff;
+    text-shadow: 0 0 5px #00aaff;
+    margin-top: 5px;
+}
+
+/* Три колонки */
+.game-layout {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.panel {
+    width: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Неоновые карточки */
+.neon-card {
+    background: rgba(0, 10, 20, 0.65);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(0, 255, 255, 0.4);
+    border-radius: 16px;
+    padding: 15px;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+    transition: all 0.3s;
+}
+
+.neon-card:hover {
+    border-color: #00ffff;
+    box-shadow: 0 0 25px #00ffff44;
+}
+
+/* Счёт */
+.score-title, .controls-title, .tips-title, .mode-title {
+    text-align: center;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    color: #00ffff;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #00ffff44;
+    padding-bottom: 5px;
+}
+
+.score-values {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.score-player {
+    text-align: center;
+}
+
+.player-icon {
+    font-size: 1.2rem;
+    display: block;
+}
+
+.player-name {
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+}
+
+.player-score {
+    font-size: 2rem;
+    color: #00ffff;
+}
+
+.score-divider {
+    font-size: 2rem;
+    color: #ff00ff;
+}
+
+/* Управление */
+.control-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid #00ffff22;
+}
+
+.control-key {
+    background: #010a12;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-family: monospace;
+    color: #00ffff;
+    border: 1px solid #00ffff66;
+}
+
+.control-desc {
+    font-size: 0.8rem;
+}
+
+/* Советы */
+.tips-panel ul {
+    list-style: none;
+    padding-left: 10px;
+}
+
+.tips-panel li {
+    font-size: 0.7rem;
+    margin-bottom: 8px;
+    color: #aaffdd;
+}
+
+/* Игровое поле */
+.game-center {
+    position: relative;
+    background: #010308;
     border-radius: 24px;
-    box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+    padding: 8px;
+    box-shadow: 0 0 30px #00ffff33, 0 0 15px #ff00ff33;
 }
 
 canvas {
     display: block;
     margin: 0 auto;
-    border-radius: 12px;
-    box-shadow: 0 0 0 2px #00ffff33, 0 0 0 4px #ff00ff33;
+    border-radius: 16px;
     cursor: none;
 }
 
-.info {
-    margin-top: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 24px;
-    flex-wrap: wrap;
-    color: #0ff;
-    text-shadow: 0 0 4px #0ff;
-}
-
-.score {
-    font-size: 2rem;
+.play-button {
+    position: absolute;
+    bottom: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #00aaff, #0055aa);
+    border: none;
+    color: white;
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
     font-weight: bold;
+    padding: 10px 30px;
+    border-radius: 60px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow: 0 0 20px #00aaff;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+
+.play-button:hover {
+    transform: translateX(-50%) scale(1.03);
+    box-shadow: 0 0 30px #00ffff;
+    background: linear-gradient(135deg, #00ffff, #0088ff);
+    color: #000;
+}
+
+.game-message {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #00ffff;
+    font-size: 1rem;
+    text-align: center;
     background: #000000aa;
-    padding: 8px 20px;
-    border-radius: 60px;
+    padding: 6px 18px;
+    border-radius: 40px;
     backdrop-filter: blur(4px);
-    letter-spacing: 4px;
+    white-space: nowrap;
 }
 
-.controls {
-    display: flex;
-    gap: 24px;
-    background: #000000aa;
-    padding: 8px 20px;
-    border-radius: 60px;
-    font-size: 0.8rem;
-    backdrop-filter: blur(4px);
-}
-
-.message {
-    background: #ff00ff22;
-    padding: 8px 20px;
-    border-radius: 60px;
-    font-weight: bold;
-    border-left: 3px solid #ff00ff;
-}
-
+/* Правая панель */
 .mode-selector {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-top: 15px;
+    text-align: center;
 }
 
 .mode-btn {
-    background: #0a0c10;
-    border: 1px solid #00ffff;
-    color: #00ffff;
-    padding: 8px 20px;
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    background: #0a101a;
+    border: 1px solid #00aaff;
+    color: #00aaff;
+    padding: 10px;
     font-family: 'Courier New', monospace;
-    font-size: 1rem;
+    font-size: 0.9rem;
     cursor: pointer;
     border-radius: 30px;
     transition: all 0.2s;
 }
 
 .mode-btn:hover {
-    background: #00ffff22;
+    background: #00aaff22;
+    border-color: #00ffff;
     box-shadow: 0 0 10px #00ffff;
 }
 
 .mode-btn.active {
-    background: #00ffff;
-    color: #0a0c10;
+    background: #00aaff;
+    color: #010308;
     border-color: #00ffff;
     box-shadow: 0 0 15px #00ffff;
+}
+
+.mode-note {
+    font-size: 0.6rem;
+    color: #88aaff;
+    margin-top: 10px;
+}
+
+/* Адаптивность */
+@media (max-width: 1000px) {
+    .game-layout {
+        flex-wrap: wrap;
+    }
+    .panel {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .left-panel, .right-panel {
+        order: 2;
+    }
+    .game-center {
+        order: 1;
+    }
 }
