@@ -15,11 +15,32 @@ let countdownValue = 3;
 let crashEffect = { active: false, x: 0, y: 0, color: '#ffffff', timer: 0 };
 let paused = false;
 let particles = [];
+let currentSteps = 0;
+let bestRecord = localStorage.getItem('tronRecord') ? parseInt(localStorage.getItem('tronRecord')) : 0;
+
+document.getElementById('recordDisplay').innerText = bestRecord;
 
 const players = [
     { color: '#00ffff', name: 'Синий', x: 5, y: Math.floor(HEIGHT / 2), dirX: 1, dirY: 0, trail: [], alive: true, score: 0 },
     { color: '#ffaa00', name: 'Оранжевый', x: WIDTH - 6, y: Math.floor(HEIGHT / 2), dirX: -1, dirY: 0, trail: [], alive: true, score: 0 }
 ];
+
+function showVictory(name) {
+    const overlay = document.getElementById('victoryOverlay');
+    overlay.innerText = `${name.toUpperCase()} ПОБЕДИЛ!`;
+    overlay.classList.add('show');
+    setTimeout(() => {
+        overlay.classList.remove('show');
+    }, 2000);
+    
+    // Обновляем рекорд (по шагам текущего заезда)
+    if (currentSteps > bestRecord) {
+        bestRecord = currentSteps;
+        localStorage.setItem('tronRecord', bestRecord);
+        document.getElementById('recordDisplay').innerText = bestRecord;
+        showMessage(`🏆 НОВЫЙ РЕКОРД: ${bestRecord} шагов!`);
+    }
+}
 
 function addParticles(x, y, color) {
     for (let i = 0; i < 5; i++) {
@@ -56,7 +77,6 @@ function drawParticles() {
     ctx.globalAlpha = 1;
 }
 
-// ========== УМНЫЙ, АГРЕССИВНЫЙ, НЕПРЕДСКАЗУЕМЫЙ ИИ ==========
 function aiMove() {
     if (gameMode !== 'ai') return;
     if (!players[1].alive) return;
@@ -64,10 +84,8 @@ function aiMove() {
     const p = players[1];
     const enemy = players[0];
     const dirs = [
-        { dx: 0, dy: -1 }, // вверх
-        { dx: 0, dy: 1 },  // вниз
-        { dx: -1, dy: 0 }, // влево
-        { dx: 1, dy: 0 }   // вправо
+        { dx: 0, dy: -1 }, { dx: 0, dy: 1 },
+        { dx: -1, dy: 0 }, { dx: 1, dy: 0 }
     ];
     
     function isSafe(x, y, selfTrail, opponentTrail) {
@@ -82,17 +100,13 @@ function aiMove() {
     }
     
     let moveScores = [];
-    
     for (const dir of dirs) {
         let newX = p.x + dir.dx;
         let newY = p.y + dir.dy;
-        
         if (!isSafe(newX, newY, p.trail, enemy.trail)) {
             moveScores.push({ dir: dir, score: -999 });
             continue;
         }
-        
-        // Симуляция 30 шагов вперёд
         let simX = newX;
         let simY = newY;
         let simTrail = [...p.trail, { x: simX, y: simY }];
@@ -100,13 +114,12 @@ function aiMove() {
         let simDirY = dir.dy;
         let steps = 0;
         const maxSteps = 30;
-        
         for (let step = 0; step < maxSteps; step++) {
             const possibleMoves = [
-                { dx: simDirX, dy: simDirY },           // прямо
-                { dx: -simDirY, dy: simDirX },          // налево
-                { dx: simDirY, dy: -simDirX },          // направо
-                { dx: -simDirX, dy: -simDirY }          // разворот
+                { dx: simDirX, dy: simDirY },
+                { dx: -simDirY, dy: simDirX },
+                { dx: simDirY, dy: -simDirX },
+                { dx: -simDirX, dy: -simDirY }
             ];
             let moved = false;
             for (const move of possibleMoves) {
@@ -125,22 +138,14 @@ function aiMove() {
             }
             if (!moved) break;
         }
-        
-        // Агрессия: чем ближе к врагу, тем лучше
         const distToEnemy = Math.abs(simX - enemy.x) + Math.abs(simY - enemy.y);
         const aggressionBonus = (maxSteps - distToEnemy) * 2;
-        
-        // Случайность: добавляем шум чтобы бот не ходил одинаково
         const randomBonus = Math.floor(Math.random() * 7) - 3;
-        
         const totalScore = steps * 10 + aggressionBonus + randomBonus;
         moveScores.push({ dir: dir, score: totalScore });
     }
-    
-    // Выбираем направление с максимальным счётом
     moveScores.sort((a, b) => b.score - a.score);
     const bestDir = moveScores[0].dir;
-    
     p.dirX = bestDir.dx;
     p.dirY = bestDir.dy;
 }
@@ -152,6 +157,7 @@ function initGame() {
     players[0].dirY = 0;
     players[0].trail = [{ x: players[0].x, y: players[0].y }];
     players[0].alive = true;
+    players[0].score = 0;
     
     players[1].x = WIDTH - 6;
     players[1].y = Math.floor(HEIGHT / 2);
@@ -159,6 +165,7 @@ function initGame() {
     players[1].dirY = 0;
     players[1].trail = [{ x: players[1].x, y: players[1].y }];
     players[1].alive = true;
+    players[1].score = 0;
     
     gameActive = false;
     winner = null;
@@ -166,16 +173,21 @@ function initGame() {
     countdownValue = 3;
     crashEffect.active = false;
     particles = [];
-    document.getElementById('gameMessage').textContent = '3...';
+    currentSteps = 0;
+    updateUI();
     draw();
     
     const countdownInterval = setInterval(() => {
         countdownValue--;
         if (countdownValue > 0) {
             document.getElementById('gameMessage').textContent = countdownValue + '...';
+            if (countdownValue === 3) speak("Три");
+            else if (countdownValue === 2) speak("Два");
+            else if (countdownValue === 1) speak("Один");
             draw();
         } else if (countdownValue === 0) {
             document.getElementById('gameMessage').textContent = 'GO!';
+            speak("GO!");
             draw();
         } else {
             clearInterval(countdownInterval);
@@ -183,11 +195,9 @@ function initGame() {
             gameActive = true;
             countdownActive = false;
             paused = false;
-            
             if (gameLoop) clearInterval(gameLoop);
             gameLoop = setInterval(() => {
                 if (paused || !gameActive) return;
-                
                 for (let p of players) {
                     if (!p.alive) continue;
                     p.x += p.dirX;
@@ -195,48 +205,47 @@ function initGame() {
                     p.trail.push({ x: p.x, y: p.y });
                     addParticles(p.x, p.y, p.color);
                 }
-                
+                currentSteps++;
                 aiMove();
                 updateParticles();
-                
                 for (let p of players) {
                     if (!p.alive) continue;
-                    if (p.x < 0 || p.x >= WIDTH || p.y < 0 || p.y >= HEIGHT) { 
-                        p.alive = false; 
+                    if (p.x < 0 || p.x >= WIDTH || p.y < 0 || p.y >= HEIGHT) {
+                        p.alive = false;
                         crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
-                        continue; 
+                        continue;
                     }
                     for (let i = 0; i < p.trail.length - 1; i++) {
-                        if (p.trail[i].x === p.x && p.trail[i].y === p.y) { 
-                            p.alive = false; 
+                        if (p.trail[i].x === p.x && p.trail[i].y === p.y) {
+                            p.alive = false;
                             crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
-                            break; 
+                            break;
                         }
                     }
                     if (p.alive) {
                         for (let other of players) {
                             if (other === p || !other.alive) continue;
                             for (let seg of other.trail) {
-                                if (seg.x === p.x && seg.y === p.y) { 
-                                    p.alive = false; 
+                                if (seg.x === p.x && seg.y === p.y) {
+                                    p.alive = false;
                                     crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
-                                    break; 
+                                    break;
                                 }
                             }
                             if (!p.alive) break;
                         }
                     }
                 }
-                
                 const alivePlayers = players.filter(p => p.alive);
                 if (alivePlayers.length === 1) {
                     const winnerIdx = players.findIndex(p => p.alive);
                     players[winnerIdx].score++;
                     winner = players[winnerIdx];
                     gameActive = false;
+                    showVictory(winner.name);
                     updateUI();
                     draw();
-                    showMessage(`${winner.name} победил!`);
+                    showMessage(`${winner.name} победил! Нажмите ИГРАТЬ`);
                     return;
                 }
                 if (alivePlayers.length === 0) {
@@ -244,12 +253,22 @@ function initGame() {
                     showMessage('Ничья!');
                     return;
                 }
-                
                 updateUI();
                 draw();
             }, MOVE_INTERVAL);
         }
     }, 1000);
+}
+
+function speak(text) {
+    if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ru-RU';
+        utterance.rate = 1;
+        utterance.pitch = 1;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+    }
 }
 
 function resetGame() {
@@ -288,7 +307,6 @@ function draw() {
         }
     }
     ctx.globalAlpha = 1;
-    
     drawParticles();
     
     if (crashEffect.active) {
@@ -329,10 +347,8 @@ function draw() {
     if (paused && gameActive && !countdownActive) {
         ctx.font = 'bold 36px "Courier New"';
         ctx.fillStyle = '#ffffff';
-        ctx.shadowBlur = 0;
         ctx.fillText('⏸ ПАУЗА', canvas.width/2 - 70, canvas.height/2);
     }
-    
     ctx.shadowBlur = 0;
 }
 
@@ -344,24 +360,7 @@ function updateUI() {
 function showMessage(msg) {
     const msgDiv = document.getElementById('gameMessage');
     msgDiv.textContent = msg;
-    setTimeout(() => {
-        if (!gameActive && winner === null) msgDiv.textContent = 'Нажмите ИГРАТЬ';
-        else if (!gameActive && winner) msgDiv.textContent = `${winner.name} победил! Нажмите ИГРАТЬ`;
-    }, 2000);
 }
-
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        e.preventDefault();
-        if (!gameActive || countdownActive) return;
-        paused = !paused;
-        draw();
-    }
-});
-
-document.getElementById('mode2p').title = 'Игра вдвоём на одном компьютере';
-document.getElementById('modeAI').title = 'Сразитесь с искусственным интеллектом';
-document.getElementById('playButton').title = 'Начать новый заезд';
 
 document.getElementById('mode2p').addEventListener('click', () => {
     gameMode = '2p';
@@ -384,16 +383,23 @@ document.getElementById('playButton').addEventListener('click', () => {
 });
 
 document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        if (!gameActive || countdownActive) return;
+        paused = !paused;
+        draw();
+    }
+});
+
+document.addEventListener('keydown', (e) => {
     const key = e.key;
     if (!gameActive || paused || countdownActive) return;
-    
     if (players[0].alive) {
         if (key === 'ArrowUp' && players[0].dirY !== 1) { players[0].dirX = 0; players[0].dirY = -1; }
         if (key === 'ArrowDown' && players[0].dirY !== -1) { players[0].dirX = 0; players[0].dirY = 1; }
         if (key === 'ArrowLeft' && players[0].dirX !== 1) { players[0].dirX = -1; players[0].dirY = 0; }
         if (key === 'ArrowRight' && players[0].dirX !== -1) { players[0].dirX = 1; players[0].dirY = 0; }
     }
-    
     if (gameMode === '2p' && players[1].alive) {
         if (key === 'w' && players[1].dirY !== 1) { players[1].dirX = 0; players[1].dirY = -1; }
         if (key === 's' && players[1].dirY !== -1) { players[1].dirX = 0; players[1].dirY = 1; }
