@@ -14,10 +14,8 @@ let countdownActive = false;
 let countdownValue = 3;
 let crashEffect = { active: false, x: 0, y: 0, color: '#ffffff', timer: 0 };
 let paused = false;
-
 let particles = [];
 
-// ЦВЕТА ТРОН: ЦИАН и ОРАНЖЕВЫЙ
 const players = [
     { color: '#00ffff', name: 'Синий', x: 5, y: Math.floor(HEIGHT / 2), dirX: 1, dirY: 0, trail: [], alive: true, score: 0 },
     { color: '#ffaa00', name: 'Оранжевый', x: WIDTH - 6, y: Math.floor(HEIGHT / 2), dirX: -1, dirY: 0, trail: [], alive: true, score: 0 }
@@ -58,35 +56,80 @@ function drawParticles() {
     ctx.globalAlpha = 1;
 }
 
+// ========== УМНЫЙ ИИ ==========
 function aiMove() {
     if (gameMode !== 'ai') return;
     if (!players[1].alive) return;
     
     const p = players[1];
-    const possibleDirs = [];
     const dirs = [
-        { dx: 0, dy: -1 }, { dx: 0, dy: 1 },
-        { dx: -1, dy: 0 }, { dx: 1, dy: 0 }
+        { dx: 0, dy: -1 },
+        { dx: 0, dy: 1 },
+        { dx: -1, dy: 0 },
+        { dx: 1, dy: 0 }
     ];
     
-    for (const dir of dirs) {
-        const newX = p.x + dir.dx;
-        const newY = p.y + dir.dy;
-        if (newX < 0 || newX >= WIDTH || newY < 0 || newY >= HEIGHT) continue;
-        let hit = false;
-        for (let i = 0; i < p.trail.length - 1; i++) {
-            if (p.trail[i].x === newX && p.trail[i].y === newY) { hit = true; break; }
+    function isSafe(x, y, selfTrail, opponentTrail) {
+        if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return false;
+        for (let i = 0; i < selfTrail.length - 1; i++) {
+            if (selfTrail[i].x === x && selfTrail[i].y === y) return false;
         }
-        for (let i = 0; i < players[0].trail.length; i++) {
-            if (players[0].trail[i].x === newX && players[0].trail[i].y === newY) { hit = true; break; }
+        for (let i = 0; i < opponentTrail.length; i++) {
+            if (opponentTrail[i].x === x && opponentTrail[i].y === y) return false;
         }
-        if (!hit) possibleDirs.push(dir);
+        return true;
     }
     
-    if (possibleDirs.length > 0) {
-        const chosen = possibleDirs[Math.floor(Math.random() * possibleDirs.length)];
-        p.dirX = chosen.dx;
-        p.dirY = chosen.dy;
+    let bestDir = null;
+    let bestScore = -1;
+    
+    for (const dir of dirs) {
+        let newX = p.x + dir.dx;
+        let newY = p.y + dir.dy;
+        if (!isSafe(newX, newY, p.trail, players[0].trail)) continue;
+        
+        let simX = newX;
+        let simY = newY;
+        let simTrail = [...p.trail, { x: simX, y: simY }];
+        let simDirX = dir.dx;
+        let simDirY = dir.dy;
+        let steps = 0;
+        const maxSteps = 30;
+        
+        for (let step = 0; step < maxSteps; step++) {
+            const possibleMoves = [
+                { dx: simDirX, dy: simDirY },
+                { dx: -simDirY, dy: simDirX },
+                { dx: simDirY, dy: -simDirX },
+                { dx: -simDirX, dy: -simDirY }
+            ];
+            let moved = false;
+            for (const move of possibleMoves) {
+                const nextX = simX + move.dx;
+                const nextY = simY + move.dy;
+                if (isSafe(nextX, nextY, simTrail, players[0].trail)) {
+                    simX = nextX;
+                    simY = nextY;
+                    simDirX = move.dx;
+                    simDirY = move.dy;
+                    simTrail.push({ x: simX, y: simY });
+                    steps++;
+                    moved = true;
+                    break;
+                }
+            }
+            if (!moved) break;
+        }
+        
+        if (steps > bestScore) {
+            bestScore = steps;
+            bestDir = dir;
+        }
+    }
+    
+    if (bestDir) {
+        p.dirX = bestDir.dx;
+        p.dirY = bestDir.dy;
     }
 }
 
