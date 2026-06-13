@@ -6,7 +6,7 @@
 }
 
 body {
-    background: radial-gradient(circle at 20% 30%, #050a14, #010308);
+    background: radial-gradient(circle at 20% 30%, #040a12, #010101);
     min-height: 100vh;
     display: flex;
     justify-content: center;
@@ -20,7 +20,6 @@ body {
     width: 100%;
 }
 
-/* Шапка в стиле Трон */
 .header {
     text-align: center;
     margin-bottom: 30px;
@@ -39,19 +38,18 @@ body {
 }
 
 .rabbit {
-    color: #ff00ff;
-    text-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00aa;
+    color: #ffaa00;
+    text-shadow: 0 0 20px #ffaa00, 0 0 40px #ff5500;
 }
 
 .logo-sub {
     font-size: 0.7rem;
     letter-spacing: 6px;
-    color: #00aaff;
-    text-shadow: 0 0 5px #00aaff;
+    color: #ffaa00;
+    text-shadow: 0 0 5px #ffaa00;
     margin-top: 5px;
 }
 
-/* Три колонки */
 .game-layout {
     display: flex;
     gap: 20px;
@@ -66,24 +64,25 @@ body {
     gap: 20px;
 }
 
-/* Неоновые карточки */
 .neon-card {
-    background: rgba(0, 10, 20, 0.65);
+    background: rgba(5, 15, 25, 0.7);
     backdrop-filter: blur(4px);
-    border: 1px solid rgba(0, 255, 255, 0.4);
+    border: 1px solid #00ffff66;
     border-radius: 16px;
     padding: 15px;
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+    box-shadow: 0 0 15px #00ffff33;
     transition: all 0.3s;
 }
 
 .neon-card:hover {
     border-color: #00ffff;
-    box-shadow: 0 0 25px #00ffff44;
+    box-shadow: 0 0 25px #00ffff66;
 }
 
-/* Счёт */
-.score-title, .controls-title, .tips-title, .mode-title {
+.score-title,
+.controls-title,
+.tips-title,
+.mode-title {
     text-align: center;
     font-size: 0.8rem;
     letter-spacing: 2px;
@@ -122,11 +121,10 @@ body {
 
 .score-divider {
     font-size: 2rem;
-    color: #ff00ff;
+    color: #ffaa00;
 }
 
-/* Управление */
-control-item {
+.control-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -149,7 +147,6 @@ control-item {
     font-size: 0.8rem;
 }
 
-/* Советы */
 .tips-panel ul {
     list-style: none;
     padding-left: 10px;
@@ -161,13 +158,12 @@ control-item {
     color: #aaffdd;
 }
 
-/* Игровое поле */
 .game-center {
     position: relative;
     background: #010308;
     border-radius: 24px;
     padding: 8px;
-    box-shadow: 0 0 30px #00ffff33, 0 0 15px #ff00ff33;
+    box-shadow: 0 0 30px #00ffff33, 0 0 15px #ffaa0033;
 }
 
 canvas {
@@ -192,7 +188,6 @@ canvas {
     white-space: nowrap;
 }
 
-/* Правая панель */
 .mode-selector {
     text-align: center;
 }
@@ -233,9 +228,9 @@ canvas {
 
 .play-button-right {
     width: 100%;
-    background: linear-gradient(135deg, #00aaff, #0055aa);
+    background: linear-gradient(135deg, #ffaa00, #aa5500);
     border: none;
-    color: white;
+    color: #010308;
     font-family: 'Courier New', monospace;
     font-size: 1.2rem;
     font-weight: bold;
@@ -243,7 +238,7 @@ canvas {
     border-radius: 60px;
     letter-spacing: 2px;
     cursor: pointer;
-    box-shadow: 0 0 15px #00aaff;
+    box-shadow: 0 0 15px #ffaa00;
     transition: all 0.2s;
     text-transform: uppercase;
     margin-top: 10px;
@@ -251,12 +246,11 @@ canvas {
 
 .play-button-right:hover {
     transform: scale(1.02);
-    box-shadow: 0 0 25px #00ffff;
-    background: linear-gradient(135deg, #00ffff, #0088ff);
+    box-shadow: 0 0 25px #ffaa00;
+    background: linear-gradient(135deg, #ffcc33, #ff8800);
     color: #000;
 }
 
-/* Адаптивность */
 @media (max-width: 1000px) {
     .game-layout {
         flex-wrap: wrap;
@@ -267,7 +261,8 @@ canvas {
         flex-wrap: wrap;
         justify-content: center;
     }
-    .left-panel, .right-panel {
+    .left-panel,
+    .right-panel {
         order: 2;
     }
     .game-center {
