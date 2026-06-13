@@ -444,4 +444,9 @@ document.addEventListener('keydown', (e) => {
 });
 
 document.getElementById('player2-controls').style.opacity = '1';
+document.getElementById('arenaClassic').addEventListener('click', () => { currentArena = 'classic'; resetGame(); });
+document.getElementById('arenaNarrow').addEventListener('click', () => { currentArena = 'narrow'; resetGame(); });
+document.getElementById('arenaObstacles').addEventListener('click', () => { currentArena = 'obstacles'; resetGame(); });
+document.getElementById('modeSurvival').addEventListener('click', () => { gameMode = 'survival'; currentArena = 'classic'; tournamentActive = false; resetGame(); });
+document.getElementById('modeTournament').addEventListener('click', () => { gameMode = 'tournament'; tournamentScore = [0,0]; tournamentActive = true; resetGame(); });
 initGame();
