@@ -15,15 +15,14 @@ let countdownValue = 3;
 let crashEffect = { active: false, x: 0, y: 0, color: '#ffffff', timer: 0 };
 let paused = false;
 
-// Частицы для шлейфов
 let particles = [];
 
+// ЦВЕТА ТРОН: ЦИАН и ОРАНЖЕВЫЙ
 const players = [
     { color: '#00ffff', name: 'Синий', x: 5, y: Math.floor(HEIGHT / 2), dirX: 1, dirY: 0, trail: [], alive: true, score: 0 },
-    { color: '#ff00ff', name: 'Красный', x: WIDTH - 6, y: Math.floor(HEIGHT / 2), dirX: -1, dirY: 0, trail: [], alive: true, score: 0 }
+    { color: '#ffaa00', name: 'Оранжевый', x: WIDTH - 6, y: Math.floor(HEIGHT / 2), dirX: -1, dirY: 0, trail: [], alive: true, score: 0 }
 ];
 
-// Добавление частиц
 function addParticles(x, y, color) {
     for (let i = 0; i < 5; i++) {
         particles.push({
@@ -38,7 +37,6 @@ function addParticles(x, y, color) {
     }
 }
 
-// Обновление частиц
 function updateParticles() {
     for (let i = 0; i < particles.length; i++) {
         particles[i].x += particles[i].vx;
@@ -51,7 +49,6 @@ function updateParticles() {
     }
 }
 
-// Отрисовка частиц
 function drawParticles() {
     for (let p of particles) {
         ctx.globalAlpha = p.life;
@@ -298,7 +295,6 @@ function showMessage(msg) {
     }, 2000);
 }
 
-// Пауза по ESC
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         e.preventDefault();
@@ -308,12 +304,10 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Тултипы для кнопок
 document.getElementById('mode2p').title = 'Игра вдвоём на одном компьютере';
 document.getElementById('modeAI').title = 'Сразитесь с искусственным интеллектом';
 document.getElementById('playButton').title = 'Начать новый заезд';
 
-// Переключение режимов
 document.getElementById('mode2p').addEventListener('click', () => {
     gameMode = '2p';
     document.getElementById('mode2p').classList.add('active');
