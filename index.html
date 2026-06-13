@@ -8,7 +8,6 @@
 </head>
 <body>
     <div class="tron-container">
-        <!-- Шапка в стиле Трон -->
         <div class="header">
             <div class="logo">
                 <span class="red">RED</span><span class="rabbit">RABBIT</span>
@@ -17,7 +16,7 @@
         </div>
 
         <div class="game-layout">
-            <!-- Левая панель: счёт и подсказки -->
+            <!-- Левая панель -->
             <div class="panel left-panel">
                 <div class="score neon-card">
                     <div class="score-title">⚡ СЧЁТ ⚡</div>
@@ -29,8 +28,8 @@
                         </div>
                         <div class="score-divider">:</div>
                         <div class="score-player">
-                            <span class="player-icon">🔴</span>
-                            <span class="player-name">КРАСНЫЙ</span>
+                            <span class="player-icon">🟠</span>
+                            <span class="player-name">ОРАНЖЕВЫЙ</span>
                             <span class="player-score" id="player2Score">0</span>
                         </div>
                     </div>
@@ -44,7 +43,7 @@
                     </div>
                     <div class="control-item" id="player2-controls">
                         <span class="control-key">W A S D</span>
-                        <span class="control-desc">🔴 КРАСНЫЙ</span>
+                        <span class="control-desc">🟠 ОРАНЖЕВЫЙ</span>
                     </div>
                 </div>
 
@@ -64,16 +63,14 @@
                 <div id="gameMessage" class="game-message"></div>
             </div>
 
-            <!-- Правая панель: ВЫБОР ПРОТИВНИКА + КНОПКА ИГРАТЬ -->
+            <!-- Правая панель -->
             <div class="panel right-panel">
                 <div class="mode-selector neon-card">
                     <div class="mode-title">⚔️ ВЫБОР ПРОТИВНИКА</div>
                     <button id="mode2p" class="mode-btn active">👥 2 ИГРОКА</button>
                     <button id="modeAI" class="mode-btn">🤖 VS ИИ</button>
-                    <div class="mode-note">Режим VS AI — красным управляет компьютер</div>
+                    <div class="mode-note">Режим VS AI — оранжевым управляет компьютер</div>
                 </div>
-
-                <!-- КНОПКА ИГРАТЬ -->
                 <button id="playButton" class="play-button-right">🚀 ИГРАТЬ</button>
             </div>
         </div>
