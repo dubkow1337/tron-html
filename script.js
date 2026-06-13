@@ -13,13 +13,54 @@ let winner = null;
 let countdownActive = false;
 let countdownValue = 3;
 let crashEffect = { active: false, x: 0, y: 0, color: '#ffffff', timer: 0 };
+let paused = false;
+
+// Частицы для шлейфов
+let particles = [];
 
 const players = [
     { color: '#00ffff', name: 'Синий', x: 5, y: Math.floor(HEIGHT / 2), dirX: 1, dirY: 0, trail: [], alive: true, score: 0 },
     { color: '#ff00ff', name: 'Красный', x: WIDTH - 6, y: Math.floor(HEIGHT / 2), dirX: -1, dirY: 0, trail: [], alive: true, score: 0 }
 ];
 
-// ИИ
+// Добавление частиц
+function addParticles(x, y, color) {
+    for (let i = 0; i < 5; i++) {
+        particles.push({
+            x: x * CELL_SIZE + CELL_SIZE / 2,
+            y: y * CELL_SIZE + CELL_SIZE / 2,
+            vx: (Math.random() - 0.5) * 4,
+            vy: (Math.random() - 0.5) * 4,
+            life: 0.5,
+            color: color,
+            size: Math.random() * 3 + 1
+        });
+    }
+}
+
+// Обновление частиц
+function updateParticles() {
+    for (let i = 0; i < particles.length; i++) {
+        particles[i].x += particles[i].vx;
+        particles[i].y += particles[i].vy;
+        particles[i].life -= 0.02;
+        if (particles[i].life <= 0) {
+            particles.splice(i, 1);
+            i--;
+        }
+    }
+}
+
+// Отрисовка частиц
+function drawParticles() {
+    for (let p of particles) {
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+    }
+    ctx.globalAlpha = 1;
+}
+
 function aiMove() {
     if (gameMode !== 'ai') return;
     if (!players[1].alive) return;
@@ -72,6 +113,7 @@ function initGame() {
     countdownActive = true;
     countdownValue = 3;
     crashEffect.active = false;
+    particles = [];
     document.getElementById('gameMessage').textContent = '3...';
     draw();
     
@@ -88,19 +130,22 @@ function initGame() {
             document.getElementById('gameMessage').textContent = '';
             gameActive = true;
             countdownActive = false;
+            paused = false;
             
             if (gameLoop) clearInterval(gameLoop);
             gameLoop = setInterval(() => {
-                if (!gameActive) return;
+                if (paused || !gameActive) return;
                 
                 for (let p of players) {
                     if (!p.alive) continue;
                     p.x += p.dirX;
                     p.y += p.dirY;
                     p.trail.push({ x: p.x, y: p.y });
+                    addParticles(p.x, p.y, p.color);
                 }
                 
                 aiMove();
+                updateParticles();
                 
                 for (let p of players) {
                     if (!p.alive) continue;
@@ -157,6 +202,7 @@ function initGame() {
 
 function resetGame() {
     if (gameLoop) clearInterval(gameLoop);
+    paused = false;
     initGame();
 }
 
@@ -164,7 +210,6 @@ function draw() {
     ctx.fillStyle = '#03050a';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Сетка
     ctx.shadowBlur = 0;
     ctx.strokeStyle = '#0f3f3a';
     ctx.lineWidth = 1;
@@ -179,7 +224,6 @@ function draw() {
         ctx.stroke();
     }
     
-    // Следы
     for (let p of players) {
         const trailLength = p.trail.length;
         for (let i = 0; i < trailLength; i++) {
@@ -193,7 +237,8 @@ function draw() {
     }
     ctx.globalAlpha = 1;
     
-    // Вспышка
+    drawParticles();
+    
     if (crashEffect.active) {
         ctx.shadowBlur = 15;
         ctx.shadowColor = '#ffffff';
@@ -203,7 +248,6 @@ function draw() {
         if (crashEffect.timer <= 0) crashEffect.active = false;
     }
     
-    // Живые игроки
     for (let p of players) {
         if (p.alive) {
             ctx.shadowBlur = 15 + 5 * Math.sin(Date.now() * 0.01);
@@ -213,7 +257,6 @@ function draw() {
         }
     }
     
-    // Обратный отсчёт
     if (countdownActive) {
         ctx.font = 'bold 64px "Courier New"';
         ctx.shadowBlur = 20;
@@ -230,6 +273,14 @@ function draw() {
             ctx.restore();
         }
     }
+    
+    if (paused && gameActive && !countdownActive) {
+        ctx.font = 'bold 36px "Courier New"';
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowBlur = 0;
+        ctx.fillText('⏸ ПАУЗА', canvas.width/2 - 70, canvas.height/2);
+    }
+    
     ctx.shadowBlur = 0;
 }
 
@@ -246,6 +297,21 @@ function showMessage(msg) {
         else if (!gameActive && winner) msgDiv.textContent = `${winner.name} победил! Нажмите ИГРАТЬ`;
     }, 2000);
 }
+
+// Пауза по ESC
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        if (!gameActive || countdownActive) return;
+        paused = !paused;
+        draw();
+    }
+});
+
+// Тултипы для кнопок
+document.getElementById('mode2p').title = 'Игра вдвоём на одном компьютере';
+document.getElementById('modeAI').title = 'Сразитесь с искусственным интеллектом';
+document.getElementById('playButton').title = 'Начать новый заезд';
 
 // Переключение режимов
 document.getElementById('mode2p').addEventListener('click', () => {
@@ -264,15 +330,13 @@ document.getElementById('modeAI').addEventListener('click', () => {
     resetGame();
 });
 
-// Кнопка Play вместо пробела
 document.getElementById('playButton').addEventListener('click', () => {
     resetGame();
 });
 
-// Управление
 document.addEventListener('keydown', (e) => {
     const key = e.key;
-    if (!gameActive) return;
+    if (!gameActive || paused || countdownActive) return;
     
     if (players[0].alive) {
         if (key === 'ArrowUp' && players[0].dirY !== 1) { players[0].dirX = 0; players[0].dirY = -1; }
