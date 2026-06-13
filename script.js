@@ -157,7 +157,6 @@ function initGame() {
     players[0].dirY = 0;
     players[0].trail = [{ x: players[0].x, y: players[0].y }];
     players[0].alive = true;
-    players[0].score = 0;
     
     players[1].x = WIDTH - 6;
     players[1].y = Math.floor(HEIGHT / 2);
@@ -165,39 +164,46 @@ function initGame() {
     players[1].dirY = 0;
     players[1].trail = [{ x: players[1].x, y: players[1].y }];
     players[1].alive = true;
-    players[1].score = 0;
     
     gameActive = false;
     winner = null;
     countdownActive = true;
-    countdownValue = 3;
+    countdownValue = 3;  // начинаем с 3
     crashEffect.active = false;
     particles = [];
     currentSteps = 0;
     updateUI();
     draw();
     
+    // Озвучиваем старт один раз
+    speak("Три");
+    
     const countdownInterval = setInterval(() => {
         countdownValue--;
-        if (countdownValue > 0) {
-            document.getElementById('gameMessage').textContent = countdownValue + '...';
-            if (countdownValue === 3) speak("Три");
-            else if (countdownValue === 2) speak("Два");
-            else if (countdownValue === 1) speak("Один");
+        
+        if (countdownValue === 2) {
+            document.getElementById('gameMessage').textContent = '2...';
+            speak("Два");
+            draw();
+        } else if (countdownValue === 1) {
+            document.getElementById('gameMessage').textContent = '1...';
+            speak("Один");
             draw();
         } else if (countdownValue === 0) {
-            document.getElementById('gameMessage').textContent = 'GO!';
-            speak("GO!");
+            document.getElementById('gameMessage').textContent = 'ВПЕРЁД!';
+            speak("Вперёд");
             draw();
-        } else {
+        } else if (countdownValue < 0) {
             clearInterval(countdownInterval);
             document.getElementById('gameMessage').textContent = '';
             gameActive = true;
             countdownActive = false;
             paused = false;
+            
             if (gameLoop) clearInterval(gameLoop);
             gameLoop = setInterval(() => {
                 if (paused || !gameActive) return;
+                
                 for (let p of players) {
                     if (!p.alive) continue;
                     p.x += p.dirX;
@@ -208,34 +214,36 @@ function initGame() {
                 currentSteps++;
                 aiMove();
                 updateParticles();
+                
                 for (let p of players) {
                     if (!p.alive) continue;
-                    if (p.x < 0 || p.x >= WIDTH || p.y < 0 || p.y >= HEIGHT) {
-                        p.alive = false;
+                    if (p.x < 0 || p.x >= WIDTH || p.y < 0 || p.y >= HEIGHT) { 
+                        p.alive = false; 
                         crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
-                        continue;
+                        continue; 
                     }
                     for (let i = 0; i < p.trail.length - 1; i++) {
-                        if (p.trail[i].x === p.x && p.trail[i].y === p.y) {
-                            p.alive = false;
+                        if (p.trail[i].x === p.x && p.trail[i].y === p.y) { 
+                            p.alive = false; 
                             crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
-                            break;
+                            break; 
                         }
                     }
                     if (p.alive) {
                         for (let other of players) {
                             if (other === p || !other.alive) continue;
                             for (let seg of other.trail) {
-                                if (seg.x === p.x && seg.y === p.y) {
-                                    p.alive = false;
+                                if (seg.x === p.x && seg.y === p.y) { 
+                                    p.alive = false; 
                                     crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
-                                    break;
+                                    break; 
                                 }
                             }
                             if (!p.alive) break;
                         }
                     }
                 }
+                
                 const alivePlayers = players.filter(p => p.alive);
                 if (alivePlayers.length === 1) {
                     const winnerIdx = players.findIndex(p => p.alive);
@@ -253,6 +261,7 @@ function initGame() {
                     showMessage('Ничья!');
                     return;
                 }
+                
                 updateUI();
                 draw();
             }, MOVE_INTERVAL);
