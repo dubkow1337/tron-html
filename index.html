@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Tron: Light Cycles | REDRABBIT</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -18,7 +18,7 @@
         <div class="game-layout">
             <!-- Левая панель -->
             <div class="panel left-panel">
-                <div class="score neon-card">
+                <div class="score neon-card fade-in">
                     <div class="score-title">⚡ СЧЁТ ⚡</div>
                     <div class="score-values">
                         <div class="score-player">
@@ -35,7 +35,7 @@
                     </div>
                 </div>
 
-                <div class="controls-panel neon-card">
+                <div class="controls-panel neon-card fade-in">
                     <div class="controls-title">🎮 УПРАВЛЕНИЕ</div>
                     <div class="control-item">
                         <span class="control-key">↑ ↓ ← →</span>
@@ -47,7 +47,12 @@
                     </div>
                 </div>
 
-                <div class="tips-panel neon-card">
+                <div class="record-card neon-card fade-in">
+                    <div class="controls-title">🏆 РЕКОРД (шаги)</div>
+                    <div class="record-value" id="recordDisplay">0</div>
+                </div>
+
+                <div class="tips-panel neon-card fade-in">
                     <div class="tips-title">💡 СОВЕТЫ</div>
                     <ul>
                         <li>Не врезайся в следы</li>
@@ -58,20 +63,21 @@
             </div>
 
             <!-- Центр: игровое поле -->
-            <div class="game-center">
+            <div class="game-center fade-in">
                 <canvas id="gameCanvas" width="800" height="600"></canvas>
                 <div id="gameMessage" class="game-message"></div>
+                <div id="victoryOverlay" class="victory-overlay"></div>
             </div>
 
             <!-- Правая панель -->
             <div class="panel right-panel">
-                <div class="mode-selector neon-card">
+                <div class="mode-selector neon-card fade-in">
                     <div class="mode-title">⚔️ ВЫБОР ПРОТИВНИКА</div>
                     <button id="mode2p" class="mode-btn active">👥 2 ИГРОКА</button>
                     <button id="modeAI" class="mode-btn">🤖 VS ИИ</button>
                     <div class="mode-note">Режим VS AI — оранжевым управляет компьютер</div>
                 </div>
-                <button id="playButton" class="play-button-right">🚀 ИГРАТЬ</button>
+                <button id="playButton" class="play-button-right fade-in">🚀 ИГРАТЬ</button>
             </div>
         </div>
     </div>
