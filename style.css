@@ -126,7 +126,7 @@ body {
 }
 
 /* Управление */
-.control-item {
+control-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -175,33 +175,6 @@ canvas {
     margin: 0 auto;
     border-radius: 16px;
     cursor: none;
-}
-
-.play-button {
-    position: absolute;
-    bottom: -60px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(135deg, #00aaff, #0055aa);
-    border: none;
-    color: white;
-    font-family: 'Courier New', monospace;
-    font-size: 1.2rem;
-    font-weight: bold;
-    padding: 10px 30px;
-    border-radius: 60px;
-    letter-spacing: 2px;
-    cursor: pointer;
-    box-shadow: 0 0 20px #00aaff;
-    transition: all 0.2s;
-    text-transform: uppercase;
-}
-
-.play-button:hover {
-    transform: translateX(-50%) scale(1.03);
-    box-shadow: 0 0 30px #00ffff;
-    background: linear-gradient(135deg, #00ffff, #0088ff);
-    color: #000;
 }
 
 .game-message {
@@ -256,6 +229,31 @@ canvas {
     font-size: 0.6rem;
     color: #88aaff;
     margin-top: 10px;
+}
+
+.play-button-right {
+    width: 100%;
+    background: linear-gradient(135deg, #00aaff, #0055aa);
+    border: none;
+    color: white;
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 12px 0;
+    border-radius: 60px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow: 0 0 15px #00aaff;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    margin-top: 10px;
+}
+
+.play-button-right:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 25px #00ffff;
+    background: linear-gradient(135deg, #00ffff, #0088ff);
+    color: #000;
 }
 
 /* Адаптивность */
