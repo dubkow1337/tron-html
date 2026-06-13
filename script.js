@@ -261,14 +261,27 @@ function initGame() {
 }
 
 function speak(text) {
-    if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'ru-RU';
-        utterance.rate = 1;
-        utterance.pitch = 1;
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utterance);
-    }
+    if (!('speechSynthesis' in window)) return;
+    
+    // Отменяем текущую речь, чтобы не наслаивалось
+    window.speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ru-RU';
+    utterance.rate = 0.85;     // чуть медленнее, внушительнее
+    utterance.pitch = 0.7;     // низкий голос (0 = бас, 2 = писклявый)
+    utterance.volume = 1;
+    
+    // Пытаемся найти мужской голос
+    const voices = window.speechSynthesis.getVoices();
+    // Ищем среди голосов русский мужской
+    const maleVoice = voices.find(voice => 
+        voice.lang === 'ru-RU' && (voice.name.toLowerCase().includes('male') || voice.name.toLowerCase().includes('alexey') || voice.name.toLowerCase().includes('fedor'))
+    );
+    // Если нашли мужской — используем его
+    if (maleVoice) utterance.voice = maleVoice;
+    
+    window.speechSynthesis.speak(utterance);
 }
 
 function resetGame() {
