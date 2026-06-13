@@ -158,6 +158,17 @@ body {
     color: #aaffdd;
 }
 
+.record-card {
+    text-align: center;
+}
+
+.record-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #ffaa00;
+    text-shadow: 0 0 10px #ffaa00;
+}
+
 .game-center {
     position: relative;
     background: #010308;
@@ -186,6 +197,34 @@ canvas {
     border-radius: 40px;
     backdrop-filter: blur(4px);
     white-space: nowrap;
+}
+
+/* victory overlay */
+.victory-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    border-radius: 16px;
+    font-size: 48px;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    color: #00ffff;
+    text-shadow: 0 0 20px #00ffff;
+    opacity: 0;
+    transition: opacity 0.5s;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.victory-overlay.show {
+    opacity: 1;
 }
 
 .mode-selector {
@@ -249,6 +288,23 @@ canvas {
     box-shadow: 0 0 25px #ffaa00;
     background: linear-gradient(135deg, #ffcc33, #ff8800);
     color: #000;
+}
+
+/* fade-in анимация */
+.fade-in {
+    animation: fadeSlideIn 0.5s ease forwards;
+    opacity: 0;
+}
+
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @media (max-width: 1000px) {
