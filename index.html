@@ -8,7 +8,6 @@
 </head>
 <body>
     <div class="tron-container">
-        <!-- Шапка в стиле Трон -->
         <div class="header">
             <div class="logo">
                 <span class="red">RED</span><span class="rabbit">RABBIT</span>
@@ -17,7 +16,7 @@
         </div>
 
         <div class="game-layout">
-            <!-- Левая панель: счёт и подсказки -->
+            <!-- ЛЕВАЯ ПАНЕЛЬ: счёт + управление -->
             <div class="panel left-panel">
                 <div class="score neon-card">
                     <div class="score-title">⚡ СЧЁТ ⚡</div>
@@ -58,13 +57,13 @@
                 </div>
             </div>
 
-            <!-- Центр: игровое поле -->
+            <!-- ЦЕНТР: игровое поле (без кнопки) -->
             <div class="game-center">
                 <canvas id="gameCanvas" width="800" height="600"></canvas>
                 <div id="gameMessage" class="game-message"></div>
             </div>
 
-            <!-- Правая панель: выбор противника + кнопка ИГРАТЬ -->
+            <!-- ПРАВАЯ ПАНЕЛЬ: выбор режима + кнопка ИГРАТЬ -->
             <div class="panel right-panel">
                 <div class="mode-selector neon-card">
                     <div class="mode-title">⚔️ ВЫБОР ПРОТИВНИКА</div>
@@ -72,7 +71,6 @@
                     <button id="modeAI" class="mode-btn">🤖 VS ИИ</button>
                     <div class="mode-note">Режим VS AI — красным управляет компьютер</div>
                 </div>
-
                 <button id="playButton" class="play-button-right">🚀 ИГРАТЬ</button>
             </div>
         </div>
