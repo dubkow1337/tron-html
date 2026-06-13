@@ -3,26 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tron: Light Cycles</title>
+    <title>Tron: Light Cycles | REDRABBIT</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="game-container">
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
-        <div class="info">
-            <div class="score">
-                <span class="player1-score">0</span> : <span class="player2-score">0</span>
+    <div class="tron-container">
+        <!-- Шапка в стиле Трон -->
+        <div class="header">
+            <div class="logo">
+                <span class="red">RED</span><span class="rabbit">RABBIT</span>
+                <div class="logo-sub">LIGHT CYCLES</div>
             </div>
-            <div class="controls">
-                <div>🔵 Синий: ↑ ↓ ← →</div>
-                <div id="player2-controls">🔴 Красный: W A S D</div>
-                <div>⏎ Пробел — новая игра</div>
-            </div>
-            <div class="message" id="message"></div>
         </div>
-        <div class="mode-selector" id="modeSelector">
-            <button id="mode2p" class="mode-btn active">👥 2 игрока</button>
-            <button id="modeAI" class="mode-btn">🤖 Против ИИ</button>
+
+        <div class="game-layout">
+            <!-- Левая панель: счёт и подсказки -->
+            <div class="panel left-panel">
+                <div class="score neon-card">
+                    <div class="score-title">⚡ СЧЁТ ⚡</div>
+                    <div class="score-values">
+                        <div class="score-player">
+                            <span class="player-icon">🔵</span>
+                            <span class="player-name">СИНИЙ</span>
+                            <span class="player-score" id="player1Score">0</span>
+                        </div>
+                        <div class="score-divider">:</div>
+                        <div class="score-player">
+                            <span class="player-icon">🔴</span>
+                            <span class="player-name">КРАСНЫЙ</span>
+                            <span class="player-score" id="player2Score">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls-panel neon-card">
+                    <div class="controls-title">🎮 УПРАВЛЕНИЕ</div>
+                    <div class="control-item">
+                        <span class="control-key">↑ ↓ ← →</span>
+                        <span class="control-desc">🔵 СИНИЙ</span>
+                    </div>
+                    <div class="control-item" id="player2-controls">
+                        <span class="control-key">W A S D</span>
+                        <span class="control-desc">🔴 КРАСНЫЙ</span>
+                    </div>
+                </div>
+
+                <div class="tips-panel neon-card">
+                    <div class="tips-title">💡 СОВЕТЫ</div>
+                    <ul>
+                        <li>Не врезайся в следы</li>
+                        <li>Не касайся границ</li>
+                        <li>Зажимай противника</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Центр: игровое поле -->
+            <div class="game-center">
+                <canvas id="gameCanvas" width="800" height="600"></canvas>
+                <button id="playButton" class="play-button">🎮 ИГРАТЬ</button>
+                <div id="gameMessage" class="game-message"></div>
+            </div>
+
+            <!-- Правая панель: выбор противника -->
+            <div class="panel right-panel">
+                <div class="mode-selector neon-card">
+                    <div class="mode-title">⚔️ ВЫБОР ПРОТИВНИКА</div>
+                    <button id="mode2p" class="mode-btn active">👥 2 ИГРОКА</button>
+                    <button id="modeAI" class="mode-btn">🤖 VS ИИ</button>
+                    <div class="mode-note">Режим VS AI — красным управляет компьютер</div>
+                </div>
+            </div>
         </div>
     </div>
     <script src="script.js"></script>
