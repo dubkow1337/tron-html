@@ -1,6 +1,3 @@
-## 🎮 Полный `script.js` с функцией стрельбы (пробел пробивает линии врагов)
-
-```javascript
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -29,9 +26,8 @@ let survivalEnemies = [];
 
 // ========== СТРЕЛЬБА ==========
 let canShoot = true;
-let shootCooldown = 0;
 let bullets = [];
-let shootDelay = 500; // миллисекунд
+let shootDelay = 500;
 
 // ========== ЗВУК ==========
 let bgMusic = null;
@@ -288,7 +284,6 @@ function updateSurvival() {
         for (let dir of dirs) {
             let nx = e.x + dir.dx;
             let ny = e.y + dir.dy;
-            
             if (nx < 1 || nx >= WIDTH-1 || ny < 1 || ny >= HEIGHT-1) continue;
             
             let hitSelf = false;
@@ -336,46 +331,30 @@ function updateSurvival() {
         e.x += e.dirX;
         e.y += e.dirY;
         e.trail.push({ x: e.x, y: e.y });
-        
         if (e.trail.length > 300) e.trail.shift();
         
         let enemyDied = false;
-        
-        if (e.x < 0 || e.x >= WIDTH || e.y < 0 || e.y >= HEIGHT) {
-            enemyDied = true;
-        }
+        if (e.x < 0 || e.x >= WIDTH || e.y < 0 || e.y >= HEIGHT) enemyDied = true;
         
         if (!enemyDied) {
             for (let i = 0; i < e.trail.length - 1; i++) {
-                if (e.trail[i].x === e.x && e.trail[i].y === e.y) {
-                    enemyDied = true;
-                    break;
-                }
+                if (e.trail[i].x === e.x && e.trail[i].y === e.y) { enemyDied = true; break; }
             }
         }
-        
         if (!enemyDied) {
             for (let seg of player.trail) {
-                if (seg.x === e.x && seg.y === e.y) {
-                    enemyDied = true;
-                    break;
-                }
+                if (seg.x === e.x && seg.y === e.y) { enemyDied = true; break; }
             }
         }
-        
         if (!enemyDied) {
             for (let other of survivalEnemies) {
                 if (other === e || !other.alive) continue;
                 for (let seg of other.trail) {
-                    if (seg.x === e.x && seg.y === e.y) {
-                        enemyDied = true;
-                        break;
-                    }
+                    if (seg.x === e.x && seg.y === e.y) { enemyDied = true; break; }
                 }
                 if (enemyDied) break;
             }
         }
-        
         if (!enemyDied && e.x === player.x && e.y === player.y) {
             player.alive = false;
             enemyDied = true;
@@ -385,15 +364,12 @@ function updateSurvival() {
             stopBgMusic();
             return;
         }
-        
         if (enemyDied) {
             e.alive = false;
             explode(e.x, e.y, e.color);
         }
     }
-    
     survivalEnemies = survivalEnemies.filter(e => e.alive);
-    
     if (!players[0].alive) {
         gameActive = false;
         showMessage('ВЫ ПРОИГРАЛИ! Нажмите ИГРАТЬ');
@@ -534,7 +510,6 @@ function updateGame() {
             }
             if (b.life <= 0) break;
         }
-        
         if (b.life <= 0) {
             bullets.splice(i, 1);
             i--;
@@ -629,7 +604,6 @@ function draw() {
         ctx.beginPath(); ctx.moveTo(0, i * CELL_SIZE); ctx.lineTo(canvas.width, i * CELL_SIZE); ctx.stroke();
     }
     
-    // Следы игроков (сплошная линия)
     for (let p of players) {
         if (p.trail.length < 2) continue;
         ctx.beginPath();
@@ -646,7 +620,6 @@ function draw() {
         ctx.stroke();
     }
     
-    // Следы врагов (сплошная линия)
     for (let e of survivalEnemies) {
         if (e.trail.length < 2) continue;
         ctx.beginPath();
@@ -663,7 +636,6 @@ function draw() {
         ctx.stroke();
     }
     
-    // Рисуем врагов (квадраты)
     for (let e of survivalEnemies) {
         ctx.fillStyle = e.color;
         ctx.fillRect(e.x * CELL_SIZE, e.y * CELL_SIZE, CELL_SIZE - 4, CELL_SIZE - 4);
@@ -692,7 +664,6 @@ function draw() {
         }
     }
     
-    // Рисуем пули
     for (let b of bullets) {
         ctx.fillStyle = '#ffff00';
         ctx.shadowBlur = 10;
