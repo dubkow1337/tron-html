@@ -88,35 +88,51 @@ body {
     letter-spacing: 1px;
     color: #00ffff;
     text-shadow: 0 0 2px #00ffff;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
     border-bottom: 1px solid #00ffff33;
     padding-bottom: 3px;
 }
 
+/* ===== КРУЖКИ ДЛЯ СЧЁТА ===== */
 .score-values {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    font-size: 1.6rem;
-    font-weight: bold;
+    gap: 8px;
 }
 
 .score-player {
     text-align: center;
+    flex: 1;
 }
 
-.player-icon {
-    font-size: 0.9rem;
-    display: block;
+.player-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    margin: 0 auto 4px auto;
+}
+
+.player-circle.blue {
+    background: #00ffff;
+    box-shadow: 0 0 8px #00ffff;
+}
+
+.player-circle.orange {
+    background: #ffaa00;
+    box-shadow: 0 0 8px #ffaa00;
 }
 
 .player-name {
+    display: block;
     font-size: 0.55rem;
     font-weight: bold;
-    letter-spacing: 1px;
+    margin-top: 4px;
+    color: #00ffff;
 }
 
 .player-score {
+    display: block;
     font-size: 1.6rem;
     font-weight: bold;
     color: #00ffff;
@@ -124,24 +140,25 @@ body {
 }
 
 .score-divider {
-    font-size: 1.6rem;
+    font-size: 1.8rem;
     font-weight: bold;
     color: #ffaa00;
     text-shadow: 0 0 2px #ffaa00;
 }
 
+/* ===== УПРАВЛЕНИЕ ===== */
 .control-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 5px;
-    padding: 2px 0;
+    margin-bottom: 6px;
+    padding: 4px 0;
     border-bottom: 1px solid #00ffff22;
 }
 
 .control-key {
     background: #010a12;
-    padding: 2px 6px;
+    padding: 2px 8px;
     border-radius: 5px;
     font-weight: bold;
     color: #00ffff;
@@ -150,10 +167,31 @@ body {
 }
 
 .control-desc {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-size: 0.65rem;
     font-weight: bold;
 }
 
+.control-circle {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+}
+
+.control-circle.blue {
+    background: #00ffff;
+    box-shadow: 0 0 4px #00ffff;
+}
+
+.control-circle.orange {
+    background: #ffaa00;
+    box-shadow: 0 0 4px #ffaa00;
+}
+
+/* ===== РЕКОРД ===== */
 .record-card {
     text-align: center;
 }
@@ -162,9 +200,10 @@ body {
     font-size: 1.6rem;
     font-weight: bold;
     color: #ffaa00;
-    text-shadow: 0 0 2px #ffaa00;
+    text-shadow: 0 0 3px #ffaa00;
 }
 
+/* ===== СОВЕТЫ ===== */
 .tips-panel ul {
     list-style: none;
     padding-left: 5px;
@@ -172,10 +211,11 @@ body {
 
 .tips-panel li {
     font-size: 0.6rem;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
     color: #aaffdd;
 }
 
+/* ===== ИГРОВОЕ ПОЛЕ ===== */
 .game-center {
     position: relative;
     background: #010308;
@@ -234,6 +274,7 @@ canvas {
     opacity: 1;
 }
 
+/* ===== КНОПКИ ===== */
 .mode-selector, .arena-selector {
     text-align: center;
 }
@@ -312,6 +353,7 @@ canvas {
     color: #000;
 }
 
+/* ===== АНИМАЦИИ ===== */
 .fade-in {
     animation: fadeSlideIn 0.4s ease forwards;
     opacity: 0;
@@ -328,6 +370,7 @@ canvas {
     }
 }
 
+/* ===== АДАПТАЦИЯ ПОД ТЕЛЕФОН ===== */
 @media (max-width: 1000px) {
     .game-layout {
         flex-wrap: wrap;
@@ -347,5 +390,12 @@ canvas {
     .neon-card {
         width: auto;
         min-width: 145px;
+    }
+    .player-circle {
+        width: 22px;
+        height: 22px;
+    }
+    .player-score {
+        font-size: 1.3rem;
     }
 }
