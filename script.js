@@ -6,6 +6,8 @@ const WIDTH = canvas.width / CELL_SIZE;
 const HEIGHT = canvas.height / CELL_SIZE;
 let MOVE_INTERVAL = 120;
 
+let opponentType = '2p';
+let matchMode = 'classic';
 let gameLoop = null;
 let gameActive = true;
 let winner = null;
@@ -17,6 +19,9 @@ let particles = [];
 let currentSteps = 0;
 let bestRecord = localStorage.getItem('tronRecord') ? parseInt(localStorage.getItem('tronRecord')) : 0;
 
+let tournamentScore = [0, 0];
+let tournamentTarget = 3;
+let tournamentActive = false;
 let survivalEnemies = [];
 
 // ========== ЗВУК ==========
@@ -56,7 +61,7 @@ function toggleSound() {
     }
 }
 
-// ========== ЧАСТИЦЫ И ВЗРЫВ ==========
+// ========== ВЗРЫВ ==========
 function explode(x, y, color) {
     const particleCount = 40;
     for (let i = 0; i < particleCount; i++) {
@@ -111,11 +116,10 @@ function drawParticles() {
     ctx.globalAlpha = 1;
 }
 
-// ========== ИГРОКИ ==========
 const players = [
     { 
-        color: '#00ffff',      // цвет мотоцикла (ярко-голубой)
-        trailColor: '#0066aa', // цвет следа (тёмно-синий)
+        color: '#00ffff',
+        trailColor: '#0066aa',
         name: 'Синий', 
         x: 5, y: Math.floor(HEIGHT / 2), 
         dirX: 1, dirY: 0, 
@@ -124,8 +128,8 @@ const players = [
         score: 0 
     },
     { 
-        color: '#ffaa00',      // цвет мотоцикла (ярко-оранжевый)
-        trailColor: '#aa3300', // цвет следа (тёмно-красный)
+        color: '#ffaa00',
+        trailColor: '#aa3300',
         name: 'Оранжевый', 
         x: WIDTH - 6, y: Math.floor(HEIGHT / 2), 
         dirX: -1, dirY: 0, 
@@ -135,7 +139,6 @@ const players = [
     }
 ];
 
-// ========== ГОЛОС ==========
 let ttsVoice = null;
 function loadTTSVoice() {
     const voices = window.speechSynthesis.getVoices();
@@ -157,7 +160,6 @@ function speak(text) {
     window.speechSynthesis.speak(utterance);
 }
 
-// ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 function isSafe(x, y, selfTrail, opponentTrail) {
     if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return false;
     for (let i = 0; i < selfTrail.length - 1; i++) {
@@ -169,7 +171,6 @@ function isSafe(x, y, selfTrail, opponentTrail) {
     return true;
 }
 
-// ========== ИИ ==========
 function aiMove() {
     if (opponentType !== 'ai') return;
     if (!players[1].alive) return;
@@ -224,7 +225,6 @@ function aiMove() {
     p.dirY = bestDir.dy;
 }
 
-// ========== ВЫЖИВАНИЕ ==========
 function spawnSurvivalEnemies() {
     survivalEnemies = [];
     const spawnPoints = [
@@ -283,7 +283,6 @@ function updateSurvival() {
     }
 }
 
-// ========== ПОБЕДА И ТУРНИР ==========
 function showVictory(name) {
     const overlay = document.getElementById('victoryOverlay');
     overlay.innerText = `${name.toUpperCase()} ПОБЕДИЛ!`;
@@ -312,7 +311,6 @@ function showVictory(name) {
     }
 }
 
-// ========== ИНИЦИАЛИЗАЦИЯ ИГРЫ ==========
 function initGame() {
     players[0].x = 5; players[0].y = Math.floor(HEIGHT / 2);
     players[0].dirX = 1; players[0].dirY = 0;
@@ -359,7 +357,6 @@ function resetGame() {
     initGame();
 }
 
-// ========== ОСНОВНОЙ ИГРОВОЙ ЦИКЛ ==========
 function updateGame() {
     if (!gameActive) return;
     for (let p of players) if (p.alive) { p.x += p.dirX; p.y += p.dirY; p.trail.push({ x: p.x, y: p.y }); addParticles(p.x, p.y, p.color); }
@@ -427,7 +424,6 @@ function updateGame() {
     updateUI(); draw();
 }
 
-// ========== ОТРИСОВКА ==========
 function draw() {
     ctx.fillStyle = '#03050a';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -516,11 +512,56 @@ function updateUI() {
 }
 function showMessage(msg) { document.getElementById('gameMessage').innerText = msg; }
 
-// ========== УПРАВЛЕНИЕ ==========
+// ========== УПРАВЛЕНИЕ КНОПКАМИ ==========
+function setActiveButton(group, activeId) {
+    const buttons = document.querySelectorAll(group);
+    buttons.forEach(btn => btn.classList.remove('active'));
+    document.getElementById(activeId).classList.add('active');
+}
+
+document.getElementById('opponent2p').addEventListener('click', () => {
+    opponentType = '2p';
+    setActiveButton('.mode-selector .mode-btn', 'opponent2p');
+    showMessage('Противник: 2 игрока. Выберите режим матча и нажмите ИГРАТЬ');
+});
+document.getElementById('opponentAI').addEventListener('click', () => {
+    opponentType = 'ai';
+    setActiveButton('.mode-selector .mode-btn', 'opponentAI');
+    showMessage('Противник: VS AI. Выберите режим матча и нажмите ИГРАТЬ');
+});
+document.getElementById('opponentSurvival').addEventListener('click', () => {
+    opponentType = 'survival';
+    setActiveButton('.mode-selector .mode-btn', 'opponentSurvival');
+    showMessage('Противник: ВЫЖИВАНИЕ. Выберите режим матча и нажмите ИГРАТЬ');
+});
+
+document.getElementById('matchClassic').addEventListener('click', () => {
+    matchMode = 'classic';
+    setActiveButton('.arena-selector .mode-btn', 'matchClassic');
+    tournamentActive = false;
+    showMessage('Режим матча: Классика (до 1 победы)');
+});
+document.getElementById('matchTournament').addEventListener('click', () => {
+    matchMode = 'tournament';
+    setActiveButton('.arena-selector .mode-btn', 'matchTournament');
+    tournamentScore = [0, 0];
+    tournamentActive = true;
+    showMessage('Режим матча: ТУРНИР до 3 побед');
+});
+
 document.getElementById('playButton').addEventListener('click', () => {
     resetGame();
 });
 document.getElementById('soundToggle').addEventListener('click', toggleSound);
+
+window.addEventListener('DOMContentLoaded', () => {
+    setActiveButton('.mode-selector .mode-btn', 'opponent2p');
+    setActiveButton('.arena-selector .mode-btn', 'matchClassic');
+    opponentType = '2p';
+    matchMode = 'classic';
+    tournamentActive = false;
+    initSound();
+});
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { e.preventDefault(); if (!gameActive || countdownActive) return; paused = !paused; draw(); }
@@ -540,9 +581,6 @@ document.addEventListener('keydown', (e) => {
 });
 
 document.getElementById('player2-controls').style.opacity = opponentType === '2p' ? '1' : '0.5';
-
-// ========== СТАРТ ==========
 initSound();
-initModes();
 showMessage('Выберите противника и режим матча, затем нажмите ИГРАТЬ');
 draw();
