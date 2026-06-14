@@ -241,61 +241,152 @@ function aiMove() {
     p.dirY = bestDir.dy;
 }
 
+// ========== ВЫЖИВАНИЕ (УМНЫЕ ВРАГИ, КООПЕРАЦИЯ, СПЛОШНАЯ ЛИНИЯ) ==========
 function spawnSurvivalEnemies() {
     survivalEnemies = [];
     const spawnPoints = [
-        { x: 3, y: 3, dirX: 1, dirY: 0 },
-        { x: WIDTH - 4, y: 3, dirX: -1, dirY: 0 },
-        { x: 3, y: HEIGHT - 4, dirX: 1, dirY: 0 }
+        { x: 3, y: 3, dirX: 1, dirY: 0, color: '#ff3366', trailColor: '#882222' },
+        { x: WIDTH - 4, y: 3, dirX: -1, dirY: 0, color: '#ff6633', trailColor: '#882222' },
+        { x: 3, y: HEIGHT - 4, dirX: 1, dirY: 0, color: '#ff9933', trailColor: '#882222' }
     ];
     for (let i = 0; i < 3; i++) {
         let sp = spawnPoints[i];
         survivalEnemies.push({
             x: sp.x, y: sp.y, dirX: sp.dirX, dirY: sp.dirY,
-            trail: [{ x: sp.x, y: sp.y }], alive: true, color: '#ff5555'
+            trail: [{ x: sp.x, y: sp.y }], alive: true,
+            color: sp.color, trailColor: sp.trailColor
         });
+    }
+}
+
+function spawnSingleSurvivalEnemy() {
+    let attempts = 0;
+    while (attempts < 30) {
+        let side = Math.floor(Math.random() * 4);
+        let x, y;
+        if (side === 0) { x = 2; y = Math.floor(Math.random() * (HEIGHT-4)) + 2; }
+        else if (side === 1) { x = WIDTH - 3; y = Math.floor(Math.random() * (HEIGHT-4)) + 2; }
+        else if (side === 2) { x = Math.floor(Math.random() * (WIDTH-4)) + 2; y = 2; }
+        else { x = Math.floor(Math.random() * (WIDTH-4)) + 2; y = HEIGHT - 3; }
+        
+        let safe = true;
+        if (players[0].x === x && players[0].y === y) safe = false;
+        for (let e of survivalEnemies) {
+            if (e.x === x && e.y === y) safe = false;
+        }
+        
+        if (safe) {
+            let dirX = 0, dirY = 0;
+            if (x === 2) dirX = 1;
+            else if (x === WIDTH-3) dirX = -1;
+            else if (y === 2) dirY = 1;
+            else if (y === HEIGHT-3) dirY = -1;
+            
+            survivalEnemies.push({
+                x: x, y: y, dirX: dirX, dirY: dirY,
+                trail: [{ x: x, y: y }], alive: true,
+                color: '#ff5555', trailColor: '#882222'
+            });
+            return;
+        }
+        attempts++;
     }
 }
 
 function updateSurvival() {
     if (opponentType !== 'survival') return;
-    for (let i = 0; i < survivalEnemies.length; i++) {
-        let e = survivalEnemies[i];
+    
+    const player = players[0];
+    if (!player.alive) return;
+    
+    // Кооперативное движение врагов
+    for (let e of survivalEnemies) {
         if (!e.alive) continue;
+        
         let bestDir = null;
-        let bestDist = Infinity;
+        let bestScore = -Infinity;
         const dirs = [
             { dx: 0, dy: -1 }, { dx: 0, dy: 1 },
             { dx: -1, dy: 0 }, { dx: 1, dy: 0 }
         ];
+        
         for (let dir of dirs) {
             let nx = e.x + dir.dx;
             let ny = e.y + dir.dy;
+            
             if (nx < 1 || nx >= WIDTH-1 || ny < 1 || ny >= HEIGHT-1) continue;
-            let safe = true;
+            
+            let hitSelf = false;
             for (let seg of e.trail) {
-                if (seg.x === nx && seg.y === ny) { safe = false; break; }
+                if (seg.x === nx && seg.y === ny) { hitSelf = true; break; }
             }
-            if (!safe) continue;
-            let dist = Math.abs(nx - players[0].x) + Math.abs(ny - players[0].y);
-            if (dist < bestDist) {
-                bestDist = dist;
+            if (hitSelf) continue;
+            
+            let hitEnemyTrail = false;
+            for (let other of survivalEnemies) {
+                if (other === e || !other.alive) continue;
+                for (let seg of other.trail) {
+                    if (seg.x === nx && seg.y === ny) { hitEnemyTrail = true; break; }
+                }
+                if (hitEnemyTrail) break;
+            }
+            if (hitEnemyTrail) continue;
+            
+            let hitPlayerTrail = false;
+            for (let seg of player.trail) {
+                if (seg.x === nx && seg.y === ny) { hitPlayerTrail = true; break; }
+            }
+            if (hitPlayerTrail) continue;
+            
+            let score = 0;
+            const distToPlayer = Math.abs(nx - player.x) + Math.abs(ny - player.y);
+            score += (WIDTH + HEIGHT - distToPlayer) * 3;
+            
+            const enemyIndex = survivalEnemies.indexOf(e);
+            const angleToPlayer = Math.atan2(ny - player.y, nx - player.x);
+            const targetAngle = (enemyIndex * Math.PI * 2 / Math.max(1, survivalEnemies.length));
+            score -= Math.abs(angleToPlayer - targetAngle) * 2;
+            
+            if (score > bestScore) {
+                bestScore = score;
                 bestDir = dir;
             }
         }
+        
         if (bestDir) {
             e.dirX = bestDir.dx;
             e.dirY = bestDir.dy;
+        } else {
+            let nx = e.x + e.dirX;
+            let ny = e.y + e.dirY;
+            if (nx >= 1 && nx < WIDTH-1 && ny >= 1 && ny < HEIGHT-1) {
+                // продолжаем
+            } else {
+                e.alive = false;
+                explode(e.x, e.y, e.color);
+                continue;
+            }
         }
+        
         e.x += e.dirX;
         e.y += e.dirY;
         e.trail.push({ x: e.x, y: e.y });
-        if (e.x === players[0].x && e.y === players[0].y) players[0].alive = false;
-        if (e.trail.length > 150) e.trail.shift();
+        
+        if (e.x === player.x && e.y === player.y) {
+            player.alive = false;
+            explode(player.x, player.y, player.color);
+        }
+        
+        if (e.trail.length > 300) e.trail.shift();
     }
+    
     survivalEnemies = survivalEnemies.filter(e => e.alive);
-    if (survivalEnemies.length === 0) {
-        spawnSurvivalEnemies();
+    
+    if (survivalEnemies.length < 2) {
+        const remaining = 3 - survivalEnemies.length;
+        for (let i = 0; i < remaining; i++) {
+            spawnSingleSurvivalEnemy();
+        }
     }
 }
 
@@ -380,7 +471,6 @@ function updateGame() {
     else aiMove();
     updateParticles();
     
-    // Проверка столкновений
     for (let p of players) {
         if (!p.alive) continue;
         if (p.x < 0 || p.x >= WIDTH || p.y < 0 || p.y >= HEIGHT) {
@@ -389,10 +479,8 @@ function updateGame() {
             explode(p.x, p.y, p.color);
             continue;
         }
-        // столкновение с линиями
         for (let other of players) {
             if (other === p && other.trail.length > 1) {
-                // проверка столкновения с самим собой (кроме последнего сегмента)
                 for (let i = 0; i < other.trail.length - 2; i++) {
                     const seg = other.trail[i];
                     const nextSeg = other.trail[i+1];
@@ -471,10 +559,9 @@ function draw() {
         ctx.beginPath(); ctx.moveTo(0, i * CELL_SIZE); ctx.lineTo(canvas.width, i * CELL_SIZE); ctx.stroke();
     }
     
-    // СПЛОШНОЙ СЛЕД — ТОНКАЯ ЛИНИЯ
+    // Следы игроков (сплошная линия)
     for (let p of players) {
         if (p.trail.length < 2) continue;
-        
         ctx.beginPath();
         ctx.lineWidth = 3;
         ctx.lineCap = 'round';
@@ -482,7 +569,6 @@ function draw() {
         ctx.shadowBlur = 6;
         ctx.shadowColor = p.trailColor;
         ctx.strokeStyle = p.trailColor;
-        
         ctx.moveTo(p.trail[0].x * CELL_SIZE + CELL_SIZE/2, p.trail[0].y * CELL_SIZE + CELL_SIZE/2);
         for (let i = 1; i < p.trail.length; i++) {
             ctx.lineTo(p.trail[i].x * CELL_SIZE + CELL_SIZE/2, p.trail[i].y * CELL_SIZE + CELL_SIZE/2);
@@ -490,14 +576,26 @@ function draw() {
         ctx.stroke();
     }
     
-    // враги (выживание)
+    // Следы врагов (сплошная линия)
     for (let e of survivalEnemies) {
-        for (let seg of e.trail) {
-            ctx.fillStyle = e.color;
-            ctx.globalAlpha = 0.6;
-            ctx.fillRect(seg.x * CELL_SIZE, seg.y * CELL_SIZE, CELL_SIZE - 4, CELL_SIZE - 4);
+        if (e.trail.length < 2) continue;
+        ctx.beginPath();
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = e.trailColor;
+        ctx.strokeStyle = e.trailColor;
+        ctx.moveTo(e.trail[0].x * CELL_SIZE + CELL_SIZE/2, e.trail[0].y * CELL_SIZE + CELL_SIZE/2);
+        for (let i = 1; i < e.trail.length; i++) {
+            ctx.lineTo(e.trail[i].x * CELL_SIZE + CELL_SIZE/2, e.trail[i].y * CELL_SIZE + CELL_SIZE/2);
         }
-        ctx.fillStyle = '#ff0000';
+        ctx.stroke();
+    }
+    
+    // Рисуем врагов (квадраты)
+    for (let e of survivalEnemies) {
+        ctx.fillStyle = e.color;
         ctx.fillRect(e.x * CELL_SIZE, e.y * CELL_SIZE, CELL_SIZE - 4, CELL_SIZE - 4);
     }
     
@@ -515,7 +613,6 @@ function draw() {
     
     let blurLevel = Math.min(12, Math.floor(currentSteps / 50));
     
-    // МОТОЦИКЛЫ — КВАДРАТЫ (поверх линии)
     for (let p of players) {
         if (p.alive) {
             ctx.shadowBlur = 12 + 3 * Math.sin(Date.now() * 0.01) + blurLevel;
