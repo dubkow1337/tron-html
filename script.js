@@ -31,7 +31,7 @@ let soundEnabled = true;
 
 function initSound() {
     try {
-        bgMusic = new Audio('tron-music.mp3');
+        bgMusic = new Audio('assets/sounds/tron-music.mp3');
         bgMusic.loop = true;
         bgMusic.volume = 0.4;
         crashSound = new Audio('crash.mp3');
