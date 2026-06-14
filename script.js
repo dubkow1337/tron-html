@@ -241,13 +241,13 @@ function aiMove() {
     p.dirY = bestDir.dy;
 }
 
-// ========== ВЫЖИВАНИЕ ==========
+// ========== ВЫЖИВАНИЕ (3 врага с правой стороны) ==========
 function spawnSurvivalEnemies() {
     survivalEnemies = [];
     const spawnPoints = [
-        { x: 3, y: 3, dirX: 1, dirY: 0, color: '#ff3366', trailColor: '#882222' },
-        { x: WIDTH - 4, y: 3, dirX: -1, dirY: 0, color: '#ff6633', trailColor: '#882222' },
-        { x: 3, y: HEIGHT - 4, dirX: 1, dirY: 0, color: '#ff9933', trailColor: '#882222' }
+        { x: WIDTH - 4, y: 5, dirX: -1, dirY: 0, color: '#ff3366', trailColor: '#882222' },
+        { x: WIDTH - 4, y: Math.floor(HEIGHT / 2), dirX: -1, dirY: 0, color: '#ff6633', trailColor: '#882222' },
+        { x: WIDTH - 4, y: HEIGHT - 6, dirX: -1, dirY: 0, color: '#ff9933', trailColor: '#882222' }
     ];
     for (let i = 0; i < 3; i++) {
         let sp = spawnPoints[i];
@@ -328,19 +328,27 @@ function updateSurvival() {
         e.trail.push({ x: e.x, y: e.y });
         if (e.trail.length > 300) e.trail.shift();
         
+        // ========== СМЕРТЬ ВРАГА (от всего) ==========
         let enemyDied = false;
+        
+        // 1. Столкновение со стеной
         if (e.x < 0 || e.x >= WIDTH || e.y < 0 || e.y >= HEIGHT) enemyDied = true;
         
+        // 2. Столкновение со своим следом
         if (!enemyDied) {
             for (let i = 0; i < e.trail.length - 1; i++) {
                 if (e.trail[i].x === e.x && e.trail[i].y === e.y) { enemyDied = true; break; }
             }
         }
+        
+        // 3. Столкновение со следом игрока
         if (!enemyDied) {
             for (let seg of player.trail) {
                 if (seg.x === e.x && seg.y === e.y) { enemyDied = true; break; }
             }
         }
+        
+        // 4. Столкновение со следами других врагов
         if (!enemyDied) {
             for (let other of survivalEnemies) {
                 if (other === e || !other.alive) continue;
@@ -350,6 +358,8 @@ function updateSurvival() {
                 if (enemyDied) break;
             }
         }
+        
+        // 5. Столкновение с игроком (взаимное)
         if (!enemyDied && e.x === player.x && e.y === player.y) {
             player.alive = false;
             enemyDied = true;
@@ -359,11 +369,13 @@ function updateSurvival() {
             stopBgMusic();
             return;
         }
+        
         if (enemyDied) {
             e.alive = false;
             explode(e.x, e.y, e.color);
         }
     }
+    
     survivalEnemies = survivalEnemies.filter(e => e.alive);
     if (!players[0].alive) {
         gameActive = false;
@@ -501,13 +513,6 @@ function updateGame() {
         if (!p.alive) continue;
     }
     
-    for (let e of survivalEnemies) {
-        if (!e.alive) continue;
-        if (e.x < 0 || e.x >= WIDTH || e.y < 0 || e.y >= HEIGHT) e.alive = false;
-        for (let i = 0; i < e.trail.length - 1; i++) {
-            if (e.trail[i].x === e.x && e.trail[i].y === e.y) { e.alive = false; break; }
-        }
-    }
     const alivePlayers = players.filter(p => p.alive);
     if (alivePlayers.length === 1 && opponentType !== 'survival') {
         let winnerIdx = players.findIndex(p => p.alive);
