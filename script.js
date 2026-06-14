@@ -24,10 +24,6 @@ let tournamentTarget = 3;
 let tournamentActive = false;
 let survivalEnemies = [];
 
-// Загрузка спрайта мотоцикла (из папки sounds, так как ты туда положил)
-let bikeSprite = new Image();
-bikeSprite.src = 'assets/sounds/tron_images.png';
-
 // ========== ЗВУК ==========
 let bgMusic = null;
 let soundEnabled = true;
@@ -590,7 +586,7 @@ function draw() {
     
     let blurLevel = Math.min(12, Math.floor(currentSteps / 50));
     
-    // Рисуем живые мотоциклы (синий — спрайт, оранжевый — квадрат)
+    // Рисуем живые мотоциклы (ТРЕУГОЛЬНИКИ)
     for (let p of players) {
         if (p.alive) {
             const cx = p.x * CELL_SIZE + CELL_SIZE / 2;
@@ -599,22 +595,31 @@ function draw() {
             ctx.save();
             ctx.translate(cx, cy);
             
-            // Поворот в зависимости от направления
             if (p.dirX === 1) ctx.rotate(0);
             else if (p.dirX === -1) ctx.rotate(Math.PI);
             else if (p.dirY === -1) ctx.rotate(-Math.PI / 2);
             else if (p.dirY === 1) ctx.rotate(Math.PI / 2);
             
-            if (p.color === '#00ffff' && bikeSprite.complete) {
-                // Синий мотоцикл — картинка
-                ctx.drawImage(bikeSprite, -9, -9, 18, 18);
-            } else {
-                // Оранжевый мотоцикл — квадрат
-                ctx.shadowBlur = 12 + 3 * Math.sin(Date.now() * 0.01);
-                ctx.shadowColor = p.color;
-                ctx.fillStyle = p.color;
-                ctx.fillRect(-8, -8, 16, 16);
-            }
+            ctx.shadowBlur = 12 + 3 * Math.sin(Date.now() * 0.01);
+            ctx.shadowColor = p.color;
+            ctx.fillStyle = p.color;
+            
+            // Треугольник (остриё вперёд, широкое основание)
+            ctx.beginPath();
+            ctx.moveTo(12, 0);     // остриё вперёд
+            ctx.lineTo(-6, -8);    // левое крыло
+            ctx.lineTo(-6, 8);     // правое крыло
+            ctx.closePath();
+            ctx.fill();
+            
+            // Внутренний белый блик
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(6, 0);
+            ctx.lineTo(-2, -3);
+            ctx.lineTo(-2, 3);
+            ctx.closePath();
+            ctx.fill();
             
             ctx.restore();
         }
