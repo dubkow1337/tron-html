@@ -16,9 +16,8 @@
         </div>
 
         <div class="game-layout">
-            <!-- ЛЕВАЯ ПАНЕЛЬ (уплотнена) -->
+            <!-- ЛЕВАЯ ПАНЕЛЬ -->
             <div class="panel left-panel">
-                <!-- Счёт -->
                 <div class="score neon-card">
                     <div class="score-title">⚡ СЧЁТ ⚡</div>
                     <div class="score-values">
@@ -36,7 +35,6 @@
                     </div>
                 </div>
 
-                <!-- Управление -->
                 <div class="controls-panel neon-card">
                     <div class="controls-title">🎮 УПРАВЛЕНИЕ</div>
                     <div class="control-item">
@@ -49,33 +47,31 @@
                     </div>
                 </div>
 
-                <!-- Рекорд -->
                 <div class="record-card neon-card">
                     <div class="controls-title">🏆 РЕКОРД</div>
                     <div class="record-value" id="recordDisplay">0</div>
                 </div>
 
-                <!-- Советы -->
                 <div class="tips-panel neon-card">
                     <div class="tips-title">💡 СОВЕТЫ</div>
                     <ul>
                         <li>Не врезайся в следы</li>
                         <li>Не касайся границ</li>
                         <li>Зажимай противника</li>
+                        <li>В режиме выживания — двигайся по кругу</li>
                     </ul>
                 </div>
             </div>
 
-            <!-- ЦЕНТР: игровое поле -->
+            <!-- ЦЕНТР -->
             <div class="game-center">
                 <canvas id="gameCanvas" width="800" height="600"></canvas>
                 <div id="gameMessage" class="game-message"></div>
                 <div id="victoryOverlay" class="victory-overlay"></div>
             </div>
 
-            <!-- ПРАВАЯ ПАНЕЛЬ (уплотнена) -->
+            <!-- ПРАВАЯ ПАНЕЛЬ -->
             <div class="panel right-panel">
-                <!-- Выбор противника -->
                 <div class="mode-selector neon-card">
                     <div class="mode-title">⚔️ ПРОТИВНИК</div>
                     <button id="opponent2p" class="mode-btn active">👥 2 ИГРОКА</button>
@@ -83,21 +79,18 @@
                     <button id="opponentSurvival" class="mode-btn">☠️ ВЫЖИВАНИЕ</button>
                 </div>
 
-                <!-- Режим матча -->
                 <div class="arena-selector neon-card">
                     <div class="mode-title">🏆 РЕЖИМ МАТЧА</div>
                     <button id="matchClassic" class="mode-btn active">🏁 КЛАССИКА</button>
                     <button id="matchTournament" class="mode-btn">🏆 ТУРНИР (3)</button>
                 </div>
 
-                <!-- Кнопки -->
                 <button id="soundToggle" class="sound-btn">🔊</button>
                 <button id="playButton" class="play-button-right">🚀 ИГРАТЬ</button>
             </div>
         </div>
     </div>
     
-    <script src="js/modes.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
