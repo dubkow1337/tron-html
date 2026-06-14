@@ -4,7 +4,7 @@ const ctx = canvas.getContext('2d');
 const CELL_SIZE = 20;
 const WIDTH = canvas.width / CELL_SIZE;
 const HEIGHT = canvas.height / CELL_SIZE;
-let MOVE_INTERVAL = 80;
+let MOVE_INTERVAL = 60;
 
 let opponentType = '2p';
 let matchMode = 'classic';
