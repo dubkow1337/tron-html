@@ -16,9 +16,10 @@
         </div>
 
         <div class="game-layout">
-            <!-- Левая панель -->
+            <!-- ЛЕВАЯ ПАНЕЛЬ (уплотнена) -->
             <div class="panel left-panel">
-                <div class="score neon-card fade-in">
+                <!-- Счёт -->
+                <div class="score neon-card">
                     <div class="score-title">⚡ СЧЁТ ⚡</div>
                     <div class="score-values">
                         <div class="score-player">
@@ -35,7 +36,8 @@
                     </div>
                 </div>
 
-                <div class="controls-panel neon-card fade-in">
+                <!-- Управление -->
+                <div class="controls-panel neon-card">
                     <div class="controls-title">🎮 УПРАВЛЕНИЕ</div>
                     <div class="control-item">
                         <span class="control-key">↑ ↓ ← →</span>
@@ -47,46 +49,50 @@
                     </div>
                 </div>
 
-                <div class="record-card neon-card fade-in">
-                    <div class="controls-title">🏆 РЕКОРД (шаги)</div>
+                <!-- Рекорд -->
+                <div class="record-card neon-card">
+                    <div class="controls-title">🏆 РЕКОРД</div>
                     <div class="record-value" id="recordDisplay">0</div>
                 </div>
 
-                <div class="tips-panel neon-card fade-in">
+                <!-- Советы -->
+                <div class="tips-panel neon-card">
                     <div class="tips-title">💡 СОВЕТЫ</div>
                     <ul>
                         <li>Не врезайся в следы</li>
                         <li>Не касайся границ</li>
                         <li>Зажимай противника</li>
-                        <li>В режиме выживания — двигайся по кругу</li>
                     </ul>
                 </div>
             </div>
 
-            <!-- Центр: игровое поле -->
-            <div class="game-center fade-in">
+            <!-- ЦЕНТР: игровое поле -->
+            <div class="game-center">
                 <canvas id="gameCanvas" width="800" height="600"></canvas>
                 <div id="gameMessage" class="game-message"></div>
                 <div id="victoryOverlay" class="victory-overlay"></div>
             </div>
 
-            <!-- Правая панель -->
+            <!-- ПРАВАЯ ПАНЕЛЬ (уплотнена) -->
             <div class="panel right-panel">
-                <div class="mode-selector neon-card fade-in">
+                <!-- Выбор противника -->
+                <div class="mode-selector neon-card">
                     <div class="mode-title">⚔️ ПРОТИВНИК</div>
                     <button id="opponent2p" class="mode-btn active">👥 2 ИГРОКА</button>
                     <button id="opponentAI" class="mode-btn">🤖 VS AI</button>
                     <button id="opponentSurvival" class="mode-btn">☠️ ВЫЖИВАНИЕ</button>
                 </div>
 
-                <div class="arena-selector neon-card fade-in">
+                <!-- Режим матча -->
+                <div class="arena-selector neon-card">
                     <div class="mode-title">🏆 РЕЖИМ МАТЧА</div>
-                    <button id="matchClassic" class="mode-btn active">🏁 КЛАССИКА (до 1 победы)</button>
-                    <button id="matchTournament" class="mode-btn">🏆 ТУРНИР (до 3 побед)</button>
+                    <button id="matchClassic" class="mode-btn active">🏁 КЛАССИКА</button>
+                    <button id="matchTournament" class="mode-btn">🏆 ТУРНИР (3)</button>
                 </div>
 
+                <!-- Кнопки -->
                 <button id="soundToggle" class="sound-btn">🔊</button>
-                <button id="playButton" class="play-button-right fade-in">🚀 ИГРАТЬ</button>
+                <button id="playButton" class="play-button-right">🚀 ИГРАТЬ</button>
             </div>
         </div>
     </div>
