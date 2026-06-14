@@ -24,6 +24,10 @@ let tournamentTarget = 3;
 let tournamentActive = false;
 let survivalEnemies = [];
 
+// Загрузка спрайта мотоцикла (из папки sounds, так как ты туда положил)
+let bikeSprite = new Image();
+bikeSprite.src = 'assets/sounds/tron_images.png';
+
 // ========== ЗВУК ==========
 let bgMusic = null;
 let soundEnabled = true;
@@ -241,7 +245,7 @@ function aiMove() {
     p.dirY = bestDir.dy;
 }
 
-// ========== ВЫЖИВАНИЕ (3 врага с правой стороны) ==========
+// ========== ВЫЖИВАНИЕ ==========
 function spawnSurvivalEnemies() {
     survivalEnemies = [];
     const spawnPoints = [
@@ -328,27 +332,19 @@ function updateSurvival() {
         e.trail.push({ x: e.x, y: e.y });
         if (e.trail.length > 300) e.trail.shift();
         
-        // ========== СМЕРТЬ ВРАГА (от всего) ==========
         let enemyDied = false;
-        
-        // 1. Столкновение со стеной
         if (e.x < 0 || e.x >= WIDTH || e.y < 0 || e.y >= HEIGHT) enemyDied = true;
         
-        // 2. Столкновение со своим следом
         if (!enemyDied) {
             for (let i = 0; i < e.trail.length - 1; i++) {
                 if (e.trail[i].x === e.x && e.trail[i].y === e.y) { enemyDied = true; break; }
             }
         }
-        
-        // 3. Столкновение со следом игрока
         if (!enemyDied) {
             for (let seg of player.trail) {
                 if (seg.x === e.x && seg.y === e.y) { enemyDied = true; break; }
             }
         }
-        
-        // 4. Столкновение со следами других врагов
         if (!enemyDied) {
             for (let other of survivalEnemies) {
                 if (other === e || !other.alive) continue;
@@ -358,8 +354,6 @@ function updateSurvival() {
                 if (enemyDied) break;
             }
         }
-        
-        // 5. Столкновение с игроком (взаимное)
         if (!enemyDied && e.x === player.x && e.y === player.y) {
             player.alive = false;
             enemyDied = true;
@@ -369,13 +363,11 @@ function updateSurvival() {
             stopBgMusic();
             return;
         }
-        
         if (enemyDied) {
             e.alive = false;
             explode(e.x, e.y, e.color);
         }
     }
-    
     survivalEnemies = survivalEnemies.filter(e => e.alive);
     if (!players[0].alive) {
         gameActive = false;
@@ -598,12 +590,33 @@ function draw() {
     
     let blurLevel = Math.min(12, Math.floor(currentSteps / 50));
     
+    // Рисуем живые мотоциклы (синий — спрайт, оранжевый — квадрат)
     for (let p of players) {
         if (p.alive) {
-            ctx.shadowBlur = 12 + 3 * Math.sin(Date.now() * 0.01) + blurLevel;
-            ctx.shadowColor = p.color;
-            ctx.fillStyle = p.color;
-            ctx.fillRect(p.x * CELL_SIZE, p.y * CELL_SIZE, CELL_SIZE - 2, CELL_SIZE - 2);
+            const cx = p.x * CELL_SIZE + CELL_SIZE / 2;
+            const cy = p.y * CELL_SIZE + CELL_SIZE / 2;
+            
+            ctx.save();
+            ctx.translate(cx, cy);
+            
+            // Поворот в зависимости от направления
+            if (p.dirX === 1) ctx.rotate(0);
+            else if (p.dirX === -1) ctx.rotate(Math.PI);
+            else if (p.dirY === -1) ctx.rotate(-Math.PI / 2);
+            else if (p.dirY === 1) ctx.rotate(Math.PI / 2);
+            
+            if (p.color === '#00ffff' && bikeSprite.complete) {
+                // Синий мотоцикл — картинка
+                ctx.drawImage(bikeSprite, -9, -9, 18, 18);
+            } else {
+                // Оранжевый мотоцикл — квадрат
+                ctx.shadowBlur = 12 + 3 * Math.sin(Date.now() * 0.01);
+                ctx.shadowColor = p.color;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-8, -8, 16, 16);
+            }
+            
+            ctx.restore();
         }
     }
     
