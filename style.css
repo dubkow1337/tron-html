@@ -12,6 +12,7 @@
     box-sizing: border-box;
     user-select: none;
     font-family: 'CyberSiberia', 'Courier New', monospace;
+    letter-spacing: -0.5px;
 }
 
 body {
@@ -30,32 +31,32 @@ body {
 
 .header {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
 }
 
 .logo {
-    font-size: 2rem;
+    font-size: 1.8rem;
     font-weight: bold;
-    letter-spacing: 4px;
+    letter-spacing: 2px;
     text-transform: uppercase;
 }
 
 .red {
     color: #00ffff;
-    text-shadow: 0 0 3px #00ffff, 0 0 6px #0088ff;
+    text-shadow: 0 0 3px #00ffff, 0 0 5px #0088ff;
 }
 
 .rabbit {
     color: #ffaa00;
-    text-shadow: 0 0 3px #ffaa00, 0 0 6px #ff5500;
+    text-shadow: 0 0 3px #ffaa00, 0 0 5px #ff5500;
 }
 
 .logo-sub {
-    font-size: 0.55rem;
-    letter-spacing: 3px;
+    font-size: 0.5rem;
+    letter-spacing: 2px;
     color: #ffaa00;
     text-shadow: 0 0 2px #ffaa00;
-    margin-top: 3px;
+    margin-top: 2px;
 }
 
 .game-layout {
@@ -66,7 +67,7 @@ body {
 }
 
 .panel {
-    width: 200px;
+    width: 195px;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -83,7 +84,7 @@ body {
 
 .neon-card:hover {
     border-color: #00ffff88;
-    box-shadow: 0 0 12px #00ffff44;
+    box-shadow: 0 0 10px #00ffff44;
 }
 
 .score-title,
@@ -91,11 +92,11 @@ body {
 .tips-title,
 .mode-title {
     text-align: center;
-    font-size: 0.65rem;
-    letter-spacing: 1px;
+    font-size: 0.62rem;
+    letter-spacing: 0px;
     color: #00ffff;
     text-shadow: 0 0 2px #00ffff;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
     border-bottom: 1px solid #00ffff33;
     padding-bottom: 3px;
     font-weight: bold;
@@ -105,7 +106,7 @@ body {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     font-weight: bold;
 }
 
@@ -114,27 +115,27 @@ body {
 }
 
 .player-icon {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     display: block;
 }
 
 .player-name {
-    font-size: 0.55rem;
-    letter-spacing: 1px;
+    font-size: 0.5rem;
+    letter-spacing: 0px;
     font-weight: bold;
 }
 
 .player-score {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     color: #00ffff;
-    text-shadow: 0 0 3px #00ffff;
+    text-shadow: 0 0 2px #00ffff;
     font-weight: bold;
 }
 
 .score-divider {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     color: #ffaa00;
-    text-shadow: 0 0 3px #ffaa00;
+    text-shadow: 0 0 2px #ffaa00;
 }
 
 .control-item {
@@ -153,13 +154,15 @@ body {
     font-weight: bold;
     font-family: 'CyberSiberia', monospace;
     color: #00ffff;
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     border: 1px solid #00ffff66;
+    letter-spacing: 0px;
 }
 
 .control-desc {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     font-weight: bold;
+    letter-spacing: 0px;
 }
 
 .record-card {
@@ -167,21 +170,22 @@ body {
 }
 
 .record-value {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     font-weight: bold;
     color: #ffaa00;
-    text-shadow: 0 0 3px #ffaa00;
+    text-shadow: 0 0 2px #ffaa00;
 }
 
 .tips-panel ul {
     list-style: none;
-    padding-left: 6px;
+    padding-left: 5px;
 }
 
 .tips-panel li {
-    font-size: 0.6rem;
+    font-size: 0.55rem;
     margin-bottom: 3px;
     color: #aaffdd;
+    letter-spacing: 0px;
 }
 
 .game-center {
@@ -205,7 +209,7 @@ canvas {
     left: 50%;
     transform: translateX(-50%);
     color: #00ffff;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: bold;
     text-align: center;
     background: #000000aa;
@@ -213,7 +217,7 @@ canvas {
     border-radius: 25px;
     backdrop-filter: blur(4px);
     white-space: nowrap;
-    text-shadow: 0 0 3px #00ffff;
+    text-shadow: 0 0 2px #00ffff;
 }
 
 .victory-overlay {
@@ -228,11 +232,11 @@ canvas {
     background: rgba(0,0,0,0.7);
     backdrop-filter: blur(4px);
     border-radius: 12px;
-    font-size: 32px;
+    font-size: 28px;
     font-weight: bold;
     font-family: 'CyberSiberia', monospace;
     color: #00ffff;
-    text-shadow: 0 0 15px #00ffff;
+    text-shadow: 0 0 10px #00ffff;
     opacity: 0;
     transition: opacity 0.5s;
     pointer-events: none;
@@ -256,33 +260,34 @@ canvas {
     color: #00aaff;
     padding: 4px;
     font-family: 'CyberSiberia', monospace;
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     font-weight: bold;
     cursor: pointer;
     border-radius: 20px;
     transition: all 0.2s;
+    letter-spacing: 0px;
 }
 
 .mode-btn:hover {
     background: #00aaff22;
     border-color: #00ffff;
-    box-shadow: 0 0 6px #00ffff;
+    box-shadow: 0 0 5px #00ffff;
 }
 
 .mode-btn.active {
     background: #00aaff;
     color: #010308;
     border-color: #00ffff;
-    box-shadow: 0 0 8px #00ffff;
+    box-shadow: 0 0 6px #00ffff;
 }
 
 .sound-btn {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     background: #0a101a;
     border: 1px solid #00ffff;
     color: #00ffff;
-    font-size: 1rem;
+    font-size: 0.95rem;
     border-radius: 50%;
     cursor: pointer;
     margin: 4px auto;
@@ -294,8 +299,8 @@ canvas {
 
 .sound-btn:hover {
     background: #00ffff22;
-    transform: scale(1.03);
-    box-shadow: 0 0 8px #00ffff;
+    transform: scale(1.02);
+    box-shadow: 0 0 6px #00ffff;
 }
 
 .play-button-right {
@@ -304,13 +309,13 @@ canvas {
     border: none;
     color: #010308;
     font-family: 'CyberSiberia', monospace;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: bold;
     padding: 6px 0;
-    border-radius: 40px;
-    letter-spacing: 2px;
+    border-radius: 35px;
+    letter-spacing: 1px;
     cursor: pointer;
-    box-shadow: 0 0 10px #ffaa00;
+    box-shadow: 0 0 8px #ffaa00;
     transition: all 0.2s;
     text-transform: uppercase;
     margin-top: 4px;
@@ -318,7 +323,7 @@ canvas {
 
 .play-button-right:hover {
     transform: scale(1.01);
-    box-shadow: 0 0 15px #ffaa00;
+    box-shadow: 0 0 12px #ffaa00;
     background: linear-gradient(135deg, #ffcc33, #ff8800);
     color: #000;
 }
@@ -331,7 +336,7 @@ canvas {
 @keyframes fadeSlideIn {
     from {
         opacity: 0;
-        transform: translateY(8px);
+        transform: translateY(6px);
     }
     to {
         opacity: 1;
@@ -357,6 +362,6 @@ canvas {
     }
     .neon-card {
         width: auto;
-        min-width: 150px;
+        min-width: 145px;
     }
 }
