@@ -227,10 +227,6 @@ canvas {
     opacity: 1;
 }
 
-.mode-selector, .arena-selector {
-    text-align: center;
-}
-
 .mode-btn {
     display: block;
     width: 100%;
