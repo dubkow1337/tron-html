@@ -116,6 +116,22 @@ function drawParticles() {
     ctx.globalAlpha = 1;
 }
 
+function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
+    const ax = px - x1;
+    const ay = py - y1;
+    const bx = x2 - x1;
+    const by = y2 - y1;
+    const dot = ax * bx + ay * by;
+    const len2 = bx * bx + by * by;
+    if (len2 === 0) return Math.hypot(ax, ay);
+    let t = dot / len2;
+    if (t < 0) t = 0;
+    if (t > 1) t = 1;
+    const projX = x1 + t * bx;
+    const projY = y1 + t * by;
+    return Math.hypot(px - projX, py - projY);
+}
+
 const players = [
     { 
         color: '#00ffff',
@@ -363,37 +379,57 @@ function updateGame() {
     if (opponentType === 'survival') updateSurvival();
     else aiMove();
     updateParticles();
+    
+    // Проверка столкновений
     for (let p of players) {
         if (!p.alive) continue;
-        if (p.x < 0 || p.x >= WIDTH || p.y < 0 || p.y >= HEIGHT) { 
-            p.alive = false; 
+        if (p.x < 0 || p.x >= WIDTH || p.y < 0 || p.y >= HEIGHT) {
+            p.alive = false;
             crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
             explode(p.x, p.y, p.color);
-            continue; 
+            continue;
         }
-        for (let i = 0; i < p.trail.length - 1; i++) {
-            if (p.trail[i].x === p.x && p.trail[i].y === p.y) { 
-                p.alive = false; 
-                crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
-                explode(p.x, p.y, p.color);
-                break; 
-            }
-        }
-        if (p.alive) {
-            for (let other of players) {
-                if (other === p || !other.alive) continue;
-                for (let seg of other.trail) {
-                    if (seg.x === p.x && seg.y === p.y) { 
-                        p.alive = false; 
+        // столкновение с линиями
+        for (let other of players) {
+            if (other === p && other.trail.length > 1) {
+                // проверка столкновения с самим собой (кроме последнего сегмента)
+                for (let i = 0; i < other.trail.length - 2; i++) {
+                    const seg = other.trail[i];
+                    const nextSeg = other.trail[i+1];
+                    const px = p.x * CELL_SIZE + CELL_SIZE/2;
+                    const py = p.y * CELL_SIZE + CELL_SIZE/2;
+                    const dist = pointToSegmentDistance(px, py, 
+                        seg.x * CELL_SIZE + CELL_SIZE/2, seg.y * CELL_SIZE + CELL_SIZE/2,
+                        nextSeg.x * CELL_SIZE + CELL_SIZE/2, nextSeg.y * CELL_SIZE + CELL_SIZE/2);
+                    if (dist < CELL_SIZE/2) {
+                        p.alive = false;
                         crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
                         explode(p.x, p.y, p.color);
-                        break; 
+                        break;
                     }
                 }
-                if (!p.alive) break;
+            } else if (other !== p) {
+                for (let i = 0; i < other.trail.length - 1; i++) {
+                    const seg = other.trail[i];
+                    const nextSeg = other.trail[i+1];
+                    const px = p.x * CELL_SIZE + CELL_SIZE/2;
+                    const py = p.y * CELL_SIZE + CELL_SIZE/2;
+                    const dist = pointToSegmentDistance(px, py, 
+                        seg.x * CELL_SIZE + CELL_SIZE/2, seg.y * CELL_SIZE + CELL_SIZE/2,
+                        nextSeg.x * CELL_SIZE + CELL_SIZE/2, nextSeg.y * CELL_SIZE + CELL_SIZE/2);
+                    if (dist < CELL_SIZE/2) {
+                        p.alive = false;
+                        crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
+                        explode(p.x, p.y, p.color);
+                        break;
+                    }
+                }
             }
+            if (!p.alive) break;
         }
+        if (!p.alive) continue;
     }
+    
     for (let e of survivalEnemies) {
         if (!e.alive) continue;
         if (e.x < 0 || e.x >= WIDTH || e.y < 0 || e.y >= HEIGHT) e.alive = false;
@@ -435,18 +471,26 @@ function draw() {
         ctx.beginPath(); ctx.moveTo(0, i * CELL_SIZE); ctx.lineTo(canvas.width, i * CELL_SIZE); ctx.stroke();
     }
     
+    // СПЛОШНОЙ СЛЕД — ТОНКАЯ ЛИНИЯ
     for (let p of players) {
-        let trailLength = p.trail.length;
-        for (let i = 0; i < trailLength; i++) {
-            let intensity = 0.2 + (i / trailLength) * 0.6;
-            ctx.shadowBlur = 8;
-            ctx.shadowColor = p.trailColor;
-            ctx.fillStyle = p.trailColor;
-            ctx.globalAlpha = intensity;
-            ctx.fillRect(p.trail[i].x * CELL_SIZE, p.trail[i].y * CELL_SIZE, CELL_SIZE - 6, CELL_SIZE - 6);
+        if (p.trail.length < 2) continue;
+        
+        ctx.beginPath();
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = p.trailColor;
+        ctx.strokeStyle = p.trailColor;
+        
+        ctx.moveTo(p.trail[0].x * CELL_SIZE + CELL_SIZE/2, p.trail[0].y * CELL_SIZE + CELL_SIZE/2);
+        for (let i = 1; i < p.trail.length; i++) {
+            ctx.lineTo(p.trail[i].x * CELL_SIZE + CELL_SIZE/2, p.trail[i].y * CELL_SIZE + CELL_SIZE/2);
         }
+        ctx.stroke();
     }
     
+    // враги (выживание)
     for (let e of survivalEnemies) {
         for (let seg of e.trail) {
             ctx.fillStyle = e.color;
@@ -471,9 +515,10 @@ function draw() {
     
     let blurLevel = Math.min(12, Math.floor(currentSteps / 50));
     
+    // МОТОЦИКЛЫ — КВАДРАТЫ (поверх линии)
     for (let p of players) {
         if (p.alive) {
-            ctx.shadowBlur = 15 + 5 * Math.sin(Date.now() * 0.01) + blurLevel;
+            ctx.shadowBlur = 12 + 3 * Math.sin(Date.now() * 0.01) + blurLevel;
             ctx.shadowColor = p.color;
             ctx.fillStyle = p.color;
             ctx.fillRect(p.x * CELL_SIZE, p.y * CELL_SIZE, CELL_SIZE - 2, CELL_SIZE - 2);
@@ -512,7 +557,6 @@ function updateUI() {
 }
 function showMessage(msg) { document.getElementById('gameMessage').innerText = msg; }
 
-// ========== УПРАВЛЕНИЕ КНОПКАМИ ==========
 function setActiveButton(group, activeId) {
     const buttons = document.querySelectorAll(group);
     buttons.forEach(btn => btn.classList.remove('active'));
