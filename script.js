@@ -61,7 +61,7 @@ function toggleSound() {
     }
 }
 
-// ========== ВЗРЫВ (ЧАСТИЦЫ) ==========
+// ========== ВЗРЫВ ==========
 function explode(x, y, color) {
     const particleCount = 40;
     for (let i = 0; i < particleCount; i++) {
@@ -116,9 +116,28 @@ function drawParticles() {
     ctx.globalAlpha = 1;
 }
 
+// ИГРОКИ: цвет мотоцикла и цвет следа (темнее)
 const players = [
-    { color: '#00ffff', name: 'Синий', x: 5, y: Math.floor(HEIGHT / 2), dirX: 1, dirY: 0, trail: [], alive: true, score: 0 },
-    { color: '#ffaa00', name: 'Оранжевый', x: WIDTH - 6, y: Math.floor(HEIGHT / 2), dirX: -1, dirY: 0, trail: [], alive: true, score: 0 }
+    { 
+        color: '#00ffff',      // цвет мотоцикла (ярко-голубой)
+        trailColor: '#0066aa', // цвет следа (тёмно-синий)
+        name: 'Синий', 
+        x: 5, y: Math.floor(HEIGHT / 2), 
+        dirX: 1, dirY: 0, 
+        trail: [], 
+        alive: true, 
+        score: 0 
+    },
+    { 
+        color: '#ffaa00',      // цвет мотоцикла (ярко-оранжевый)
+        trailColor: '#aa3300', // цвет следа (тёмно-красный)
+        name: 'Оранжевый', 
+        x: WIDTH - 6, y: Math.floor(HEIGHT / 2), 
+        dirX: -1, dirY: 0, 
+        trail: [], 
+        alive: true, 
+        score: 0 
+    }
 ];
 
 let ttsVoice = null;
@@ -417,13 +436,14 @@ function draw() {
         ctx.beginPath(); ctx.moveTo(0, i * CELL_SIZE); ctx.lineTo(canvas.width, i * CELL_SIZE); ctx.stroke();
     }
     
+    // Рисуем следы (используем trailColor — темнее)
     for (let p of players) {
         let trailLength = p.trail.length;
         for (let i = 0; i < trailLength; i++) {
             let intensity = 0.2 + (i / trailLength) * 0.6;
             ctx.shadowBlur = 8;
-            ctx.shadowColor = p.color;
-            ctx.fillStyle = p.color;
+            ctx.shadowColor = p.trailColor;
+            ctx.fillStyle = p.trailColor;
             ctx.globalAlpha = intensity;
             ctx.fillRect(p.trail[i].x * CELL_SIZE, p.trail[i].y * CELL_SIZE, CELL_SIZE - 6, CELL_SIZE - 6);
         }
@@ -453,6 +473,7 @@ function draw() {
     
     let blurLevel = Math.min(12, Math.floor(currentSteps / 50));
     
+    // Рисуем живые мотоциклы (используем color — яркий)
     for (let p of players) {
         if (p.alive) {
             ctx.shadowBlur = 15 + 5 * Math.sin(Date.now() * 0.01) + blurLevel;
