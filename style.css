@@ -50,7 +50,6 @@ body {
     margin-top: 3px;
 }
 
-/* Три колонки — уплотнено */
 .game-layout {
     display: flex;
     gap: 12px;
@@ -65,7 +64,6 @@ body {
     gap: 12px;
 }
 
-/* Неоновые карточки — меньше отступов */
 .neon-card {
     background: rgba(5, 15, 25, 0.7);
     backdrop-filter: blur(4px);
@@ -94,7 +92,6 @@ body {
     padding-bottom: 4px;
 }
 
-/* Счёт — компактно */
 .score-values {
     display: flex;
     justify-content: space-around;
@@ -127,7 +124,6 @@ body {
     color: #ffaa00;
 }
 
-/* Управление */
 .control-item {
     display: flex;
     justify-content: space-between;
@@ -152,7 +148,6 @@ body {
     font-size: 0.7rem;
 }
 
-/* Рекорд */
 .record-card {
     text-align: center;
 }
@@ -164,7 +159,6 @@ body {
     text-shadow: 0 0 8px #ffaa00;
 }
 
-/* Советы */
 .tips-panel ul {
     list-style: none;
     padding-left: 8px;
@@ -176,7 +170,6 @@ body {
     color: #aaffdd;
 }
 
-/* Игровое поле */
 .game-center {
     position: relative;
     background: #010308;
@@ -234,7 +227,6 @@ canvas {
     opacity: 1;
 }
 
-/* Кнопки выбора режима — компактно */
 .mode-selector, .arena-selector {
     text-align: center;
 }
@@ -267,7 +259,6 @@ canvas {
     box-shadow: 0 0 10px #00ffff;
 }
 
-/* Кнопка звука */
 .sound-btn {
     width: 40px;
     height: 40px;
@@ -289,7 +280,6 @@ canvas {
     transform: scale(1.05);
 }
 
-/* Кнопка ИГРАТЬ */
 .play-button-right {
     width: 100%;
     background: linear-gradient(135deg, #ffaa00, #aa5500);
@@ -315,7 +305,6 @@ canvas {
     color: #000;
 }
 
-/* Анимация появления */
 .fade-in {
     animation: fadeSlideIn 0.4s ease forwards;
     opacity: 0;
@@ -332,7 +321,6 @@ canvas {
     }
 }
 
-/* Адаптивность */
 @media (max-width: 1000px) {
     .game-layout {
         flex-wrap: wrap;
