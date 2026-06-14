@@ -1,3 +1,6 @@
+## 🎮 Полный `script.js` с функцией стрельбы (пробел пробивает линии врагов)
+
+```javascript
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -23,6 +26,12 @@ let tournamentScore = [0, 0];
 let tournamentTarget = 3;
 let tournamentActive = false;
 let survivalEnemies = [];
+
+// ========== СТРЕЛЬБА ==========
+let canShoot = true;
+let shootCooldown = 0;
+let bullets = [];
+let shootDelay = 500; // миллисекунд
 
 // ========== ЗВУК ==========
 let bgMusic = null;
@@ -241,7 +250,7 @@ function aiMove() {
     p.dirY = bestDir.dy;
 }
 
-// ========== ВЫЖИВАНИЕ (3 врага, 1 жизнь, смерть при столкновении) ==========
+// ========== ВЫЖИВАНИЕ ==========
 function spawnSurvivalEnemies() {
     survivalEnemies = [];
     const spawnPoints = [
@@ -265,12 +274,10 @@ function updateSurvival() {
     const player = players[0];
     if (!player.alive) return;
     
-    // Проходим по всем врагам
     for (let i = 0; i < survivalEnemies.length; i++) {
         let e = survivalEnemies[i];
         if (!e.alive) continue;
         
-        // Поиск лучшего направления
         let bestDir = null;
         let bestScore = -Infinity;
         const dirs = [
@@ -326,23 +333,18 @@ function updateSurvival() {
             e.dirY = bestDir.dy;
         }
         
-        // Движение
         e.x += e.dirX;
         e.y += e.dirY;
         e.trail.push({ x: e.x, y: e.y });
         
-        // Ограничение длины следа
         if (e.trail.length > 300) e.trail.shift();
         
-        // ========== ПРОВЕРКА СМЕРТИ ВРАГА ==========
         let enemyDied = false;
         
-        // 1. Столкновение со стеной
         if (e.x < 0 || e.x >= WIDTH || e.y < 0 || e.y >= HEIGHT) {
             enemyDied = true;
         }
         
-        // 2. Столкновение со своим следом
         if (!enemyDied) {
             for (let i = 0; i < e.trail.length - 1; i++) {
                 if (e.trail[i].x === e.x && e.trail[i].y === e.y) {
@@ -352,7 +354,6 @@ function updateSurvival() {
             }
         }
         
-        // 3. Столкновение со следом игрока
         if (!enemyDied) {
             for (let seg of player.trail) {
                 if (seg.x === e.x && seg.y === e.y) {
@@ -362,7 +363,6 @@ function updateSurvival() {
             }
         }
         
-        // 4. Столкновение со следами других врагов
         if (!enemyDied) {
             for (let other of survivalEnemies) {
                 if (other === e || !other.alive) continue;
@@ -376,7 +376,6 @@ function updateSurvival() {
             }
         }
         
-        // 5. Столкновение с игроком (взаимное)
         if (!enemyDied && e.x === player.x && e.y === player.y) {
             player.alive = false;
             enemyDied = true;
@@ -393,18 +392,41 @@ function updateSurvival() {
         }
     }
     
-    // Удаляем мёртвых врагов
     survivalEnemies = survivalEnemies.filter(e => e.alive);
     
-    // Если игрок умер — игра окончена
     if (!players[0].alive) {
         gameActive = false;
         showMessage('ВЫ ПРОИГРАЛИ! Нажмите ИГРАТЬ');
         stopBgMusic();
         return;
     }
+}
+
+function shoot() {
+    if (!gameActive) return;
+    if (opponentType !== 'survival') return;
+    if (!canShoot) return;
+    if (!players[0].alive) return;
     
-    // Не создаём новых врагов — их ровно 3 в начале и всё
+    canShoot = false;
+    setTimeout(() => { canShoot = true; }, shootDelay);
+    
+    const p = players[0];
+    const cx = p.x * CELL_SIZE + CELL_SIZE / 2;
+    const cy = p.y * CELL_SIZE + CELL_SIZE / 2;
+    
+    let dirX = p.dirX;
+    let dirY = p.dirY;
+    
+    bullets.push({
+        x: cx,
+        y: cy,
+        dirX: dirX,
+        dirY: dirY,
+        speed: 8,
+        life: 50,
+        size: 6
+    });
 }
 
 function showVictory(name) {
@@ -448,6 +470,8 @@ function initGame() {
         spawnSurvivalEnemies();
         players[1].alive = false;
     }
+    bullets = [];
+    canShoot = true;
     gameActive = false; winner = null;
     countdownActive = true; countdownValue = 3;
     crashEffect.active = false; particles = [];
@@ -487,6 +511,35 @@ function updateGame() {
     if (opponentType === 'survival') updateSurvival();
     else aiMove();
     updateParticles();
+    
+    // Обновление пуль
+    for (let i = 0; i < bullets.length; i++) {
+        let b = bullets[i];
+        b.x += b.dirX * b.speed;
+        b.y += b.dirY * b.speed;
+        b.life--;
+        
+        for (let e of survivalEnemies) {
+            for (let j = 0; j < e.trail.length; j++) {
+                const seg = e.trail[j];
+                const dist = Math.hypot(b.x - (seg.x * CELL_SIZE + CELL_SIZE/2), 
+                                        b.y - (seg.y * CELL_SIZE + CELL_SIZE/2));
+                if (dist < CELL_SIZE/2) {
+                    e.trail.splice(j, 1);
+                    j--;
+                    b.life = 0;
+                    addParticles(seg.x, seg.y, '#ffff00');
+                    break;
+                }
+            }
+            if (b.life <= 0) break;
+        }
+        
+        if (b.life <= 0) {
+            bullets.splice(i, 1);
+            i--;
+        }
+    }
     
     for (let p of players) {
         if (!p.alive) continue;
@@ -639,6 +692,17 @@ function draw() {
         }
     }
     
+    // Рисуем пули
+    for (let b of bullets) {
+        ctx.fillStyle = '#ffff00';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#ffff00';
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+    
     if (countdownActive) {
         ctx.font = 'bold 64px "Courier New"';
         ctx.shadowBlur = 20;
@@ -711,6 +775,13 @@ document.getElementById('playButton').addEventListener('click', () => {
     resetGame();
 });
 document.getElementById('soundToggle').addEventListener('click', toggleSound);
+
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+        e.preventDefault();
+        shoot();
+    }
+});
 
 window.addEventListener('DOMContentLoaded', () => {
     setActiveButton('.mode-selector .mode-btn', 'opponent2p');
