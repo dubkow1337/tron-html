@@ -16,34 +16,40 @@
         </div>
 
         <div class="game-layout">
-            <!-- ЛЕВАЯ ПАНЕЛЬ -->
+            <!-- Левая панель -->
             <div class="panel left-panel">
+                <!-- Счёт с кружками -->
                 <div class="score neon-card">
                     <div class="score-title">⚡ СЧЁТ ⚡</div>
                     <div class="score-values">
                         <div class="score-player">
-                            <span class="player-icon">🔵</span>
+                            <div class="player-circle blue"></div>
                             <span class="player-name">СИНИЙ</span>
                             <span class="player-score" id="player1Score">0</span>
                         </div>
                         <div class="score-divider">:</div>
                         <div class="score-player">
-                            <span class="player-icon">🟠</span>
+                            <div class="player-circle orange"></div>
                             <span class="player-name">ОРАНЖЕВЫЙ</span>
                             <span class="player-score" id="player2Score">0</span>
                         </div>
                     </div>
                 </div>
 
+                <!-- Управление с кружками -->
                 <div class="controls-panel neon-card">
                     <div class="controls-title">🎮 УПРАВЛЕНИЕ</div>
                     <div class="control-item">
                         <span class="control-key">↑ ↓ ← →</span>
-                        <span class="control-desc">🔵 СИНИЙ</span>
+                        <span class="control-desc">
+                            <span class="control-circle blue"></span> СИНИЙ
+                        </span>
                     </div>
                     <div class="control-item" id="player2-controls">
                         <span class="control-key">W A S D</span>
-                        <span class="control-desc">🟠 ОРАНЖЕВЫЙ</span>
+                        <span class="control-desc">
+                            <span class="control-circle orange"></span> ОРАНЖЕВЫЙ
+                        </span>
                     </div>
                 </div>
 
@@ -62,14 +68,14 @@
                 </div>
             </div>
 
-            <!-- ЦЕНТР: игровое поле -->
+            <!-- Центр: игровое поле -->
             <div class="game-center">
                 <canvas id="gameCanvas" width="800" height="600"></canvas>
                 <div id="gameMessage" class="game-message"></div>
                 <div id="victoryOverlay" class="victory-overlay"></div>
             </div>
 
-            <!-- ПРАВАЯ ПАНЕЛЬ -->
+            <!-- Правая панель -->
             <div class="panel right-panel">
                 <div class="mode-selector neon-card">
                     <div class="mode-title">⚔️ ПРОТИВНИК</div>
