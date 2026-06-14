@@ -391,33 +391,46 @@ function draw() {
         ctx.beginPath(); ctx.moveTo(i * CELL_SIZE, 0); ctx.lineTo(i * CELL_SIZE, canvas.height); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(0, i * CELL_SIZE); ctx.lineTo(canvas.width, i * CELL_SIZE); ctx.stroke();
     }
+    
+    // Рисуем следы (ТОНЬШЕ — размер CELL_SIZE - 6)
     for (let p of players) {
         let trailLength = p.trail.length;
         for (let i = 0; i < trailLength; i++) {
             let intensity = 0.2 + (i / trailLength) * 0.6;
-            ctx.shadowBlur = 8; ctx.shadowColor = p.color;
-            ctx.fillStyle = p.color; ctx.globalAlpha = intensity;
-            ctx.fillRect(p.trail[i].x * CELL_SIZE, p.trail[i].y * CELL_SIZE, CELL_SIZE - 1, CELL_SIZE - 1);
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = p.color;
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = intensity;
+            ctx.fillRect(p.trail[i].x * CELL_SIZE, p.trail[i].y * CELL_SIZE, CELL_SIZE - 6, CELL_SIZE - 6);
         }
     }
+    
+    // Рисуем врагов в режиме выживания
     for (let e of survivalEnemies) {
         for (let seg of e.trail) {
-            ctx.fillStyle = e.color; ctx.globalAlpha = 0.6;
-            ctx.fillRect(seg.x * CELL_SIZE, seg.y * CELL_SIZE, CELL_SIZE - 1, CELL_SIZE - 1);
+            ctx.fillStyle = e.color;
+            ctx.globalAlpha = 0.6;
+            ctx.fillRect(seg.x * CELL_SIZE, seg.y * CELL_SIZE, CELL_SIZE - 4, CELL_SIZE - 4);
         }
         ctx.fillStyle = '#ff0000';
-        ctx.fillRect(e.x * CELL_SIZE, e.y * CELL_SIZE, CELL_SIZE - 2, CELL_SIZE - 2);
+        ctx.fillRect(e.x * CELL_SIZE, e.y * CELL_SIZE, CELL_SIZE - 4, CELL_SIZE - 4);
     }
+    
     ctx.globalAlpha = 1;
     drawParticles();
+    
     if (crashEffect.active) {
-        ctx.shadowBlur = 15; ctx.shadowColor = '#ffffff';
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#ffffff';
         ctx.fillStyle = crashEffect.color;
         ctx.fillRect(crashEffect.x * CELL_SIZE, crashEffect.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
         crashEffect.timer--;
         if (crashEffect.timer <= 0) crashEffect.active = false;
     }
+    
     let blurLevel = Math.min(12, Math.floor(currentSteps / 50));
+    
+    // Рисуем живые мотоциклы (ШИРЕ — размер CELL_SIZE - 2)
     for (let p of players) {
         if (p.alive) {
             ctx.shadowBlur = 15 + 5 * Math.sin(Date.now() * 0.01) + blurLevel;
@@ -426,18 +439,27 @@ function draw() {
             ctx.fillRect(p.x * CELL_SIZE, p.y * CELL_SIZE, CELL_SIZE - 2, CELL_SIZE - 2);
         }
     }
+    
     if (countdownActive) {
-        ctx.font = 'bold 64px "Courier New"'; ctx.shadowBlur = 20;
-        ctx.shadowColor = '#00ffff'; ctx.fillStyle = '#00ffff';
+        ctx.font = 'bold 64px "Courier New"';
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = '#00ffff';
+        ctx.fillStyle = '#00ffff';
         let text = countdownValue > 0 ? countdownValue.toString() : '';
         if (countdownValue === 0) text = 'GO!';
-        if (text) { let scale = 1 + Math.sin(Date.now() * 0.02) * 0.2;
-            ctx.save(); ctx.translate(canvas.width/2, canvas.height/2);
-            ctx.scale(scale, scale); ctx.fillText(text, -ctx.measureText(text).width/2, 20);
-            ctx.restore(); }
+        if (text) {
+            let scale = 1 + Math.sin(Date.now() * 0.02) * 0.2;
+            ctx.save();
+            ctx.translate(canvas.width/2, canvas.height/2);
+            ctx.scale(scale, scale);
+            ctx.fillText(text, -ctx.measureText(text).width/2, 20);
+            ctx.restore();
+        }
     }
+    
     if (paused && gameActive && !countdownActive) {
-        ctx.font = 'bold 36px "Courier New"'; ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 36px "Courier New"';
+        ctx.fillStyle = '#ffffff';
         ctx.fillText('⏸ ПАУЗА', canvas.width/2 - 70, canvas.height/2);
     }
     ctx.shadowBlur = 0;
