@@ -26,7 +26,6 @@ let survivalEnemies = [];
 
 // ========== ЗВУК ==========
 let bgMusic = null;
-let crashSound = null;
 let soundEnabled = true;
 
 function initSound() {
@@ -34,8 +33,6 @@ function initSound() {
         bgMusic = new Audio('assets/sounds/tron-music.mp3');
         bgMusic.loop = true;
         bgMusic.volume = 0.4;
-        crashSound = new Audio('crash.mp3');
-        crashSound.volume = 0.6;
     } catch(e) { console.log('Sound not loaded'); }
 }
 
@@ -52,13 +49,6 @@ function stopBgMusic() {
     }
 }
 
-function playCrashSound() {
-    if (crashSound && soundEnabled) {
-        crashSound.currentTime = 0;
-        crashSound.play().catch(e => console.log('Sound error'));
-    }
-}
-
 function toggleSound() {
     soundEnabled = !soundEnabled;
     const btn = document.getElementById('soundToggle');
@@ -71,30 +61,24 @@ function toggleSound() {
     }
 }
 
-const players = [
-    { color: '#00ffff', name: 'Синий', x: 5, y: Math.floor(HEIGHT / 2), dirX: 1, dirY: 0, trail: [], alive: true, score: 0 },
-    { color: '#ffaa00', name: 'Оранжевый', x: WIDTH - 6, y: Math.floor(HEIGHT / 2), dirX: -1, dirY: 0, trail: [], alive: true, score: 0 }
-];
-
-let ttsVoice = null;
-function loadTTSVoice() {
-    const voices = window.speechSynthesis.getVoices();
-    ttsVoice = voices.find(voice => voice.name === 'Microsoft Pavel' && voice.lang === 'ru-RU');
-    if (!ttsVoice) setTimeout(loadTTSVoice, 200);
-}
-if (typeof window !== 'undefined') {
-    window.speechSynthesis.onvoiceschanged = loadTTSVoice;
-    loadTTSVoice();
-}
-function speak(text) {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'ru-RU';
-    utterance.rate = 0.85;
-    utterance.pitch = 0.6;
-    if (ttsVoice) utterance.voice = ttsVoice;
-    window.speechSynthesis.speak(utterance);
+// ========== ВЗРЫВ (ЧАСТИЦЫ) ==========
+function explode(x, y, color) {
+    const particleCount = 40;
+    for (let i = 0; i < particleCount; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 6 + 2;
+        const vx = Math.cos(angle) * speed;
+        const vy = Math.sin(angle) * speed;
+        particles.push({
+            x: x * CELL_SIZE + CELL_SIZE / 2,
+            y: y * CELL_SIZE + CELL_SIZE / 2,
+            vx: vx,
+            vy: vy,
+            life: 0.8,
+            color: color,
+            size: Math.random() * 4 + 2
+        });
+    }
 }
 
 function addParticles(x, y, color) {
@@ -130,6 +114,32 @@ function drawParticles() {
         ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
     }
     ctx.globalAlpha = 1;
+}
+
+const players = [
+    { color: '#00ffff', name: 'Синий', x: 5, y: Math.floor(HEIGHT / 2), dirX: 1, dirY: 0, trail: [], alive: true, score: 0 },
+    { color: '#ffaa00', name: 'Оранжевый', x: WIDTH - 6, y: Math.floor(HEIGHT / 2), dirX: -1, dirY: 0, trail: [], alive: true, score: 0 }
+];
+
+let ttsVoice = null;
+function loadTTSVoice() {
+    const voices = window.speechSynthesis.getVoices();
+    ttsVoice = voices.find(voice => voice.name === 'Microsoft Pavel' && voice.lang === 'ru-RU');
+    if (!ttsVoice) setTimeout(loadTTSVoice, 200);
+}
+if (typeof window !== 'undefined') {
+    window.speechSynthesis.onvoiceschanged = loadTTSVoice;
+    loadTTSVoice();
+}
+function speak(text) {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ru-RU';
+    utterance.rate = 0.85;
+    utterance.pitch = 0.6;
+    if (ttsVoice) utterance.voice = ttsVoice;
+    window.speechSynthesis.speak(utterance);
 }
 
 function isSafe(x, y, selfTrail, opponentTrail) {
@@ -331,15 +341,30 @@ function updateGame() {
     updateParticles();
     for (let p of players) {
         if (!p.alive) continue;
-        if (p.x < 0 || p.x >= WIDTH || p.y < 0 || p.y >= HEIGHT) { p.alive = false; crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 }; playCrashSound(); continue; }
+        if (p.x < 0 || p.x >= WIDTH || p.y < 0 || p.y >= HEIGHT) { 
+            p.alive = false; 
+            crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
+            explode(p.x, p.y, p.color);
+            continue; 
+        }
         for (let i = 0; i < p.trail.length - 1; i++) {
-            if (p.trail[i].x === p.x && p.trail[i].y === p.y) { p.alive = false; crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 }; playCrashSound(); break; }
+            if (p.trail[i].x === p.x && p.trail[i].y === p.y) { 
+                p.alive = false; 
+                crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
+                explode(p.x, p.y, p.color);
+                break; 
+            }
         }
         if (p.alive) {
             for (let other of players) {
                 if (other === p || !other.alive) continue;
                 for (let seg of other.trail) {
-                    if (seg.x === p.x && seg.y === p.y) { p.alive = false; crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 }; playCrashSound(); break; }
+                    if (seg.x === p.x && seg.y === p.y) { 
+                        p.alive = false; 
+                        crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
+                        explode(p.x, p.y, p.color);
+                        break; 
+                    }
                 }
                 if (!p.alive) break;
             }
@@ -392,7 +417,6 @@ function draw() {
         ctx.beginPath(); ctx.moveTo(0, i * CELL_SIZE); ctx.lineTo(canvas.width, i * CELL_SIZE); ctx.stroke();
     }
     
-    // Рисуем следы (ТОНЬШЕ — размер CELL_SIZE - 6)
     for (let p of players) {
         let trailLength = p.trail.length;
         for (let i = 0; i < trailLength; i++) {
@@ -405,7 +429,6 @@ function draw() {
         }
     }
     
-    // Рисуем врагов в режиме выживания
     for (let e of survivalEnemies) {
         for (let seg of e.trail) {
             ctx.fillStyle = e.color;
@@ -430,7 +453,6 @@ function draw() {
     
     let blurLevel = Math.min(12, Math.floor(currentSteps / 50));
     
-    // Рисуем живые мотоциклы (ШИРЕ — размер CELL_SIZE - 2)
     for (let p of players) {
         if (p.alive) {
             ctx.shadowBlur = 15 + 5 * Math.sin(Date.now() * 0.01) + blurLevel;
