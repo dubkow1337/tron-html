@@ -36,7 +36,7 @@ body {
 
 .logo {
     font-size: 1.8rem;
-    font-weight: bold;
+    font-weight: 500;
     letter-spacing: 2px;
     text-transform: uppercase;
 }
@@ -93,13 +93,13 @@ body {
 .mode-title {
     text-align: center;
     font-size: 0.62rem;
+    font-weight: 500;
     letter-spacing: 0px;
     color: #00ffff;
     text-shadow: 0 0 2px #00ffff;
     margin-bottom: 5px;
     border-bottom: 1px solid #00ffff33;
     padding-bottom: 3px;
-    font-weight: bold;
 }
 
 .score-values {
@@ -107,7 +107,7 @@ body {
     justify-content: space-around;
     align-items: center;
     font-size: 1.4rem;
-    font-weight: bold;
+    font-weight: 500;
 }
 
 .score-player {
@@ -121,19 +121,20 @@ body {
 
 .player-name {
     font-size: 0.5rem;
+    font-weight: 500;
     letter-spacing: 0px;
-    font-weight: bold;
 }
 
 .player-score {
     font-size: 1.4rem;
+    font-weight: 500;
     color: #00ffff;
     text-shadow: 0 0 2px #00ffff;
-    font-weight: bold;
 }
 
 .score-divider {
     font-size: 1.4rem;
+    font-weight: 500;
     color: #ffaa00;
     text-shadow: 0 0 2px #ffaa00;
 }
@@ -151,7 +152,7 @@ body {
     background: #010a12;
     padding: 2px 5px;
     border-radius: 5px;
-    font-weight: bold;
+    font-weight: 500;
     font-family: 'CyberSiberia', monospace;
     color: #00ffff;
     font-size: 0.6rem;
@@ -161,7 +162,7 @@ body {
 
 .control-desc {
     font-size: 0.6rem;
-    font-weight: bold;
+    font-weight: 500;
     letter-spacing: 0px;
 }
 
@@ -171,7 +172,7 @@ body {
 
 .record-value {
     font-size: 1.4rem;
-    font-weight: bold;
+    font-weight: 500;
     color: #ffaa00;
     text-shadow: 0 0 2px #ffaa00;
 }
@@ -183,6 +184,7 @@ body {
 
 .tips-panel li {
     font-size: 0.55rem;
+    font-weight: 500;
     margin-bottom: 3px;
     color: #aaffdd;
     letter-spacing: 0px;
@@ -210,7 +212,7 @@ canvas {
     transform: translateX(-50%);
     color: #00ffff;
     font-size: 0.8rem;
-    font-weight: bold;
+    font-weight: 500;
     text-align: center;
     background: #000000aa;
     padding: 3px 10px;
@@ -233,7 +235,7 @@ canvas {
     backdrop-filter: blur(4px);
     border-radius: 12px;
     font-size: 28px;
-    font-weight: bold;
+    font-weight: 500;
     font-family: 'CyberSiberia', monospace;
     color: #00ffff;
     text-shadow: 0 0 10px #00ffff;
@@ -261,7 +263,7 @@ canvas {
     padding: 4px;
     font-family: 'CyberSiberia', monospace;
     font-size: 0.6rem;
-    font-weight: bold;
+    font-weight: 500;
     cursor: pointer;
     border-radius: 20px;
     transition: all 0.2s;
@@ -310,7 +312,7 @@ canvas {
     color: #010308;
     font-family: 'CyberSiberia', monospace;
     font-size: 0.85rem;
-    font-weight: bold;
+    font-weight: 500;
     padding: 6px 0;
     border-radius: 35px;
     letter-spacing: 1px;
