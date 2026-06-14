@@ -24,11 +24,6 @@ let tournamentTarget = 3;
 let tournamentActive = false;
 let survivalEnemies = [];
 
-// ========== СТРЕЛЬБА ==========
-let canShoot = true;
-let bullets = [];
-let shootDelay = 500;
-
 // ========== ЗВУК ==========
 let bgMusic = null;
 let soundEnabled = true;
@@ -378,33 +373,6 @@ function updateSurvival() {
     }
 }
 
-function shoot() {
-    if (!gameActive) return;
-    if (opponentType !== 'survival') return;
-    if (!canShoot) return;
-    if (!players[0].alive) return;
-    
-    canShoot = false;
-    setTimeout(() => { canShoot = true; }, shootDelay);
-    
-    const p = players[0];
-    const cx = p.x * CELL_SIZE + CELL_SIZE / 2;
-    const cy = p.y * CELL_SIZE + CELL_SIZE / 2;
-    
-    let dirX = p.dirX;
-    let dirY = p.dirY;
-    
-    bullets.push({
-        x: cx,
-        y: cy,
-        dirX: dirX,
-        dirY: dirY,
-        speed: 8,
-        life: 50,
-        size: 6
-    });
-}
-
 function showVictory(name) {
     const overlay = document.getElementById('victoryOverlay');
     overlay.innerText = `${name.toUpperCase()} ПОБЕДИЛ!`;
@@ -446,8 +414,6 @@ function initGame() {
         spawnSurvivalEnemies();
         players[1].alive = false;
     }
-    bullets = [];
-    canShoot = true;
     gameActive = false; winner = null;
     countdownActive = true; countdownValue = 3;
     crashEffect.active = false; particles = [];
@@ -487,34 +453,6 @@ function updateGame() {
     if (opponentType === 'survival') updateSurvival();
     else aiMove();
     updateParticles();
-    
-    // Обновление пуль
-    for (let i = 0; i < bullets.length; i++) {
-        let b = bullets[i];
-        b.x += b.dirX * b.speed;
-        b.y += b.dirY * b.speed;
-        b.life--;
-        
-        for (let e of survivalEnemies) {
-            for (let j = 0; j < e.trail.length; j++) {
-                const seg = e.trail[j];
-                const dist = Math.hypot(b.x - (seg.x * CELL_SIZE + CELL_SIZE/2), 
-                                        b.y - (seg.y * CELL_SIZE + CELL_SIZE/2));
-                if (dist < CELL_SIZE/2) {
-                    e.trail.splice(j, 1);
-                    j--;
-                    b.life = 0;
-                    addParticles(seg.x, seg.y, '#ffff00');
-                    break;
-                }
-            }
-            if (b.life <= 0) break;
-        }
-        if (b.life <= 0) {
-            bullets.splice(i, 1);
-            i--;
-        }
-    }
     
     for (let p of players) {
         if (!p.alive) continue;
@@ -664,16 +602,6 @@ function draw() {
         }
     }
     
-    for (let b of bullets) {
-        ctx.fillStyle = '#ffff00';
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#ffff00';
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, b.size / 2, 0, Math.PI * 2);
-        ctx.fill();
-    }
-    ctx.shadowBlur = 0;
-    
     if (countdownActive) {
         ctx.font = 'bold 64px "Courier New"';
         ctx.shadowBlur = 20;
@@ -746,13 +674,6 @@ document.getElementById('playButton').addEventListener('click', () => {
     resetGame();
 });
 document.getElementById('soundToggle').addEventListener('click', toggleSound);
-
-document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space') {
-        e.preventDefault();
-        shoot();
-    }
-});
 
 window.addEventListener('DOMContentLoaded', () => {
     setActiveButton('.mode-selector .mode-btn', 'opponent2p');
