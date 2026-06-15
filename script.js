@@ -326,7 +326,11 @@ function updateSurvival() {
         e.x += e.dirX;
         e.y += e.dirY;
         e.trail.push({ x: e.x, y: e.y });
-        if (e.trail.length > 300) e.trail.shift();
+        
+        // Ограничение длины следа врага (15 клеток)
+        if (e.trail.length > 15) {
+            e.trail.shift();
+        }
         
         let enemyDied = false;
         if (e.x < 0 || e.x >= WIDTH || e.y < 0 || e.y >= HEIGHT) enemyDied = true;
@@ -449,7 +453,18 @@ function resetGame() {
 
 function updateGame() {
     if (!gameActive) return;
-    for (let p of players) if (p.alive) { p.x += p.dirX; p.y += p.dirY; p.trail.push({ x: p.x, y: p.y }); addParticles(p.x, p.y, p.color); }
+    for (let p of players) if (p.alive) { 
+        p.x += p.dirX;
+        p.y += p.dirY;
+        p.trail.push({ x: p.x, y: p.y });
+        
+        // Ограничение длины следа (максимум 15 клеток)
+        if (p.trail.length > 15) {
+            p.trail.shift();
+        }
+        
+        addParticles(p.x, p.y, p.color);
+    }
     if (opponentType === 'survival') updateSurvival();
     else aiMove();
     updateParticles();
@@ -586,7 +601,7 @@ function draw() {
     
     let blurLevel = Math.min(12, Math.floor(currentSteps / 50));
     
-    // Рисуем живые мотоциклы (ТРЕУГОЛЬНИКИ)
+    // Рисуем живые мотоциклы (треугольники)
     for (let p of players) {
         if (p.alive) {
             const cx = p.x * CELL_SIZE + CELL_SIZE / 2;
@@ -604,18 +619,18 @@ function draw() {
             ctx.shadowColor = p.color;
             ctx.fillStyle = p.color;
             
-            // Треугольник (остриё вперёд, широкое основание)
+            // Треугольник
             ctx.beginPath();
-            ctx.moveTo(12, 0);     // остриё вперёд
-            ctx.lineTo(-6, -8);    // левое крыло
-            ctx.lineTo(-6, 8);     // правое крыло
+            ctx.moveTo(10, 0);
+            ctx.lineTo(-5, -7);
+            ctx.lineTo(-5, 7);
             ctx.closePath();
             ctx.fill();
             
-            // Внутренний белый блик
+            // Внутренний блик
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
-            ctx.moveTo(6, 0);
+            ctx.moveTo(5, 0);
             ctx.lineTo(-2, -3);
             ctx.lineTo(-2, 3);
             ctx.closePath();
