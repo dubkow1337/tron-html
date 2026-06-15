@@ -265,10 +265,9 @@ function updateSurvival() {
     const player = players[0];
     if (!player.alive) return;
     
-    // Эффект замедления врагов от бонуса
     let currentEnemySpeed = MOVE_INTERVAL;
-    if (typeof enemySlowActive !== 'undefined' && enemySlowActive) {
-        currentEnemySpeed = Math.min(120, MOVE_INTERVAL + 30);
+    if (enemySlowActive) {
+        currentEnemySpeed = Math.min(140, MOVE_INTERVAL + 50);
     }
     
     for (let i = 0; i < survivalEnemies.length; i++) {
@@ -428,6 +427,8 @@ function initGame() {
     bonusTimer = 0;
     shieldActive = false;
     enemySlowActive = false;
+    enemyNoTrailActive = false;
+    speedActive = false;
     
     gameActive = false; winner = null;
     countdownActive = true; countdownValue = 3;
@@ -498,53 +499,79 @@ function updateGame() {
         }
     }
     
+    // ========== ПРОВЕРКА СТОЛКНОВЕНИЙ ==========
     for (let p of players) {
         if (!p.alive) continue;
+        
+        // ЩИТ: если активен, пропускаем все проверки для игрока
+        if (shieldActive && p === players[0]) {
+            continue;  // игрок неуязвим
+        }
+        
+        // Столкновение с границами
         if (p.x < 0 || p.x >= WIDTH || p.y < 0 || p.y >= HEIGHT) {
             p.alive = false;
             crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
             explode(p.x, p.y, p.color);
             continue;
         }
+        
+        // Столкновение со своими следами
+        for (let i = 0; i < p.trail.length - 2; i++) {
+            if (p.trail[i].x === p.x && p.trail[i].y === p.y) {
+                p.alive = false;
+                crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
+                explode(p.x, p.y, p.color);
+                break;
+            }
+        }
+        if (!p.alive) continue;
+        
+        // Столкновение со следами других игроков
         for (let other of players) {
-            if (other === p && other.trail.length > 1) {
-                for (let i = 0; i < other.trail.length - 2; i++) {
-                    const seg = other.trail[i];
-                    const nextSeg = other.trail[i+1];
-                    const px = p.x * CELL_SIZE + CELL_SIZE/2;
-                    const py = p.y * CELL_SIZE + CELL_SIZE/2;
-                    const dist = pointToSegmentDistance(px, py, 
-                        seg.x * CELL_SIZE + CELL_SIZE/2, seg.y * CELL_SIZE + CELL_SIZE/2,
-                        nextSeg.x * CELL_SIZE + CELL_SIZE/2, nextSeg.y * CELL_SIZE + CELL_SIZE/2);
-                    if (dist < CELL_SIZE/2) {
-                        p.alive = false;
-                        crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
-                        explode(p.x, p.y, p.color);
-                        break;
-                    }
-                }
-            } else if (other !== p) {
-                for (let i = 0; i < other.trail.length - 1; i++) {
-                    const seg = other.trail[i];
-                    const nextSeg = other.trail[i+1];
-                    const px = p.x * CELL_SIZE + CELL_SIZE/2;
-                    const py = p.y * CELL_SIZE + CELL_SIZE/2;
-                    const dist = pointToSegmentDistance(px, py, 
-                        seg.x * CELL_SIZE + CELL_SIZE/2, seg.y * CELL_SIZE + CELL_SIZE/2,
-                        nextSeg.x * CELL_SIZE + CELL_SIZE/2, nextSeg.y * CELL_SIZE + CELL_SIZE/2);
-                    if (dist < CELL_SIZE/2) {
-                        p.alive = false;
-                        crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
-                        explode(p.x, p.y, p.color);
-                        break;
-                    }
+            if (other === p) continue;
+            for (let i = 0; i < other.trail.length - 1; i++) {
+                const seg = other.trail[i];
+                const nextSeg = other.trail[i+1];
+                const px = p.x * CELL_SIZE + CELL_SIZE/2;
+                const py = p.y * CELL_SIZE + CELL_SIZE/2;
+                const dist = pointToSegmentDistance(px, py, 
+                    seg.x * CELL_SIZE + CELL_SIZE/2, seg.y * CELL_SIZE + CELL_SIZE/2,
+                    nextSeg.x * CELL_SIZE + CELL_SIZE/2, nextSeg.y * CELL_SIZE + CELL_SIZE/2);
+                if (dist < CELL_SIZE/2) {
+                    p.alive = false;
+                    crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
+                    explode(p.x, p.y, p.color);
+                    break;
                 }
             }
             if (!p.alive) break;
         }
         if (!p.alive) continue;
+        
+        // Столкновение с врагами (режим выживания)
+        for (let e of survivalEnemies) {
+            if (!e.alive) continue;
+            for (let i = 0; i < e.trail.length - 1; i++) {
+                const seg = e.trail[i];
+                const nextSeg = e.trail[i+1];
+                const px = p.x * CELL_SIZE + CELL_SIZE/2;
+                const py = p.y * CELL_SIZE + CELL_SIZE/2;
+                const dist = pointToSegmentDistance(px, py,
+                    seg.x * CELL_SIZE + CELL_SIZE/2, seg.y * CELL_SIZE + CELL_SIZE/2,
+                    nextSeg.x * CELL_SIZE + CELL_SIZE/2, nextSeg.y * CELL_SIZE + CELL_SIZE/2);
+                if (dist < CELL_SIZE/2) {
+                    p.alive = false;
+                    crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
+                    explode(p.x, p.y, p.color);
+                    break;
+                }
+            }
+            if (!p.alive) break;
+        }
     }
     
+    // Определение победителя
     const alivePlayers = players.filter(p => p.alive);
     if (alivePlayers.length === 1 && opponentType !== 'survival') {
         let winnerIdx = players.findIndex(p => p.alive);
@@ -579,6 +606,7 @@ function draw() {
         ctx.beginPath(); ctx.moveTo(0, i * CELL_SIZE); ctx.lineTo(canvas.width, i * CELL_SIZE); ctx.stroke();
     }
     
+    // Следы игроков
     for (let p of players) {
         if (p.trail.length < 2) continue;
         ctx.beginPath();
@@ -595,6 +623,7 @@ function draw() {
         ctx.stroke();
     }
     
+    // Следы врагов (выживание)
     for (let e of survivalEnemies) {
         if (e.trail.length < 2) continue;
         ctx.beginPath();
@@ -611,6 +640,7 @@ function draw() {
         ctx.stroke();
     }
     
+    // Враги
     for (let e of survivalEnemies) {
         ctx.fillStyle = e.color;
         ctx.fillRect(e.x * CELL_SIZE, e.y * CELL_SIZE, CELL_SIZE - 4, CELL_SIZE - 4);
@@ -630,7 +660,7 @@ function draw() {
     
     let blurLevel = Math.min(12, Math.floor(currentSteps / 50));
     
-    // Рисуем живые мотоциклы (треугольники)
+    // Мотоциклы (треугольники)
     for (let p of players) {
         if (p.alive) {
             const cx = p.x * CELL_SIZE + CELL_SIZE / 2;
@@ -667,7 +697,7 @@ function draw() {
         }
     }
     
-    // Отрисовка бонусов
+    // Бонусы
     if (typeof drawBonuses === 'function') {
         drawBonuses();
     }
