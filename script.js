@@ -24,12 +24,6 @@ let tournamentTarget = 3;
 let tournamentActive = false;
 let survivalEnemies = [];
 
-// ========== БОНУСЫ (флаги) ==========
-// Эти флаги устанавливаются в bonuses.js и используются здесь
-if (typeof shieldActive === 'undefined') var shieldActive = false;
-if (typeof speedActive === 'undefined') var speedActive = false;
-if (typeof enemySlowActive === 'undefined') var enemySlowActive = false;
-if (typeof enemyNoTrailActive === 'undefined') var enemyNoTrailActive = false;
 
 // ========== ЗВУК ==========
 let bgMusic = null;
