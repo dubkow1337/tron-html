@@ -1,16 +1,15 @@
 // ========== БОНУСЫ ==========
 let bonuses = [];
 let bonusTimer = 0;
-
-// Активные эффекты (уникальные имена с префиксом bonus)
-let bonusShieldActive = false;
-let bonusShieldEndTime = 0;
-let bonusSpeedActive = false;
-let bonusSpeedEndTime = 0;
-let bonusSlowActive = false;
-let bonusSlowEndTime = 0;
-let bonusNoTrailActive = false;
-let bonusNoTrailEndTime = 0;
+let shieldActive = false;
+let shieldEndTime = 0;
+let enemySlowActive = false;
+let enemySlowEndTime = 0;
+let enemyNoTrailActive = false;
+let enemyNoTrailEndTime = 0;
+let speedActive = false;
+let speedEndTime = 0;
+let originalMoveInterval = 70;
 
 const bonusTypes = {
     speed: { name: 'Ускорение', color: '#00ff00', symbol: '⚡', duration: 5000 },
@@ -21,7 +20,6 @@ const bonusTypes = {
 
 function spawnBonus() {
     if (bonuses.length >= 3) return;
-    if (typeof WIDTH === 'undefined' || typeof HEIGHT === 'undefined') return;
     
     const types = ['speed', 'shield', 'slowEnemies', 'noTrail'];
     const type = types[Math.floor(Math.random() * types.length)];
@@ -34,15 +32,11 @@ function spawnBonus() {
         y = Math.floor(Math.random() * HEIGHT);
         free = true;
         
-        if (typeof players !== 'undefined') {
-            for (let p of players) {
-                if (p.alive && p.x === x && p.y === y) free = false;
-            }
+        for (let p of players) {
+            if (p.alive && p.x === x && p.y === y) free = false;
         }
-        if (typeof survivalEnemies !== 'undefined') {
-            for (let e of survivalEnemies) {
-                if (e.alive && e.x === x && e.y === y) free = false;
-            }
+        for (let e of survivalEnemies) {
+            if (e.alive && e.x === x && e.y === y) free = false;
         }
         for (let b of bonuses) {
             if (b.x === x && b.y === y) free = false;
@@ -62,8 +56,7 @@ function spawnBonus() {
 }
 
 function updateBonuses() {
-    if (typeof bonuses === 'undefined') return;
-    
+    // Обновление таймеров бонусов на поле
     for (let i = 0; i < bonuses.length; i++) {
         bonuses[i].life--;
         if (bonuses[i].life <= 0) {
@@ -72,32 +65,36 @@ function updateBonuses() {
         }
     }
     
+    // Спавн новых бонусов (каждые ~5 секунд)
     bonusTimer++;
     if (bonusTimer > 250 && bonuses.length < 3) {
         bonusTimer = 0;
         spawnBonus();
     }
     
-    const now = Date.now();
-    
-    if (bonusSpeedActive && now > bonusSpeedEndTime) {
-        bonusSpeedActive = false;
-        if (typeof showMessage === 'function') showMessage('⚡ Ускорение закончилось');
+    // Проверка ускорения
+    if (speedActive && Date.now() > speedEndTime) {
+        speedActive = false;
+        MOVE_INTERVAL = originalMoveInterval;
+        showMessage('⚡ Ускорение закончилось');
     }
     
-    if (bonusShieldActive && now > bonusShieldEndTime) {
-        bonusShieldActive = false;
-        if (typeof showMessage === 'function') showMessage('🛡️ Щит исчез!');
+    // Проверка щита
+    if (shieldActive && Date.now() > shieldEndTime) {
+        shieldActive = false;
+        showMessage('🛡️ Щит исчез!');
     }
     
-    if (bonusSlowActive && now > bonusSlowEndTime) {
-        bonusSlowActive = false;
-        if (typeof showMessage === 'function') showMessage('🐢 Враги ускорились!');
+    // Проверка замедления врагов
+    if (enemySlowActive && Date.now() > enemySlowEndTime) {
+        enemySlowActive = false;
+        showMessage('🐢 Враги ускорились!');
     }
     
-    if (bonusNoTrailActive && now > bonusNoTrailEndTime) {
-        bonusNoTrailActive = false;
-        if (typeof showMessage === 'function') showMessage('✂️ У врагов снова появился след!');
+    // Проверка исчезновения следа врагов
+    if (enemyNoTrailActive && Date.now() > enemyNoTrailEndTime) {
+        enemyNoTrailActive = false;
+        showMessage('✂️ У врагов снова появился след!');
     }
 }
 
@@ -105,46 +102,55 @@ function collectBonus(bonus, player) {
     const type = bonus.type;
     const b = bonusTypes[type];
     
-    if (typeof showMessage === 'function') showMessage(`✨ ${b.name}! ${b.symbol}`);
-    const now = Date.now();
+    showMessage(`✨ ${b.name}! ${b.symbol}`);
     
     switch(type) {
         case 'speed':
-            bonusSpeedActive = true;
-            bonusSpeedEndTime = now + b.duration;
-            if (typeof showMessage === 'function') showMessage(`⚡ СКОРОСТЬ УВЕЛИЧЕНА!`);
+            // Ускорение (работает везде)
+            if (!speedActive) {
+                originalMoveInterval = MOVE_INTERVAL;
+            }
+            speedActive = true;
+            speedEndTime = Date.now() + b.duration;
+            MOVE_INTERVAL = Math.max(25, MOVE_INTERVAL - 35);
+            showMessage(`⚡ СКОРОСТЬ УВЕЛИЧЕНА!`);
             break;
-        case 'shield':
-            bonusShieldActive = true;
-            bonusShieldEndTime = now + b.duration;
-            if (typeof showMessage === 'function') showMessage(`🛡️ ЩИТ АКТИВИРОВАН! (Неуязвимость)`);
-            break;
-        case 'slowEnemies':
-            bonusSlowActive = true;
-            bonusSlowEndTime = now + b.duration;
-            if (typeof showMessage === 'function') showMessage(`🐢 ВРАГИ ЗАМЕДЛЕНЫ!`);
-            break;
-        case 'noTrail':
-            bonusNoTrailActive = true;
-            bonusNoTrailEndTime = now + b.duration;
             
-            if (typeof opponentType !== 'undefined' && opponentType === 'survival' && typeof survivalEnemies !== 'undefined') {
+        case 'shield':
+            // Щит от всех следов (работает везде)
+            shieldActive = true;
+            shieldEndTime = Date.now() + b.duration;
+            showMessage(`🛡️ ЩИТ АКТИВИРОВАН! (Неуязвимость)`);
+            break;
+            
+        case 'slowEnemies':
+            // Замедление врагов (работает в режиме выживания и VS AI)
+            enemySlowActive = true;
+            enemySlowEndTime = Date.now() + b.duration;
+            showMessage(`🐢 ВРАГИ ЗАМЕДЛЕНЫ!`);
+            break;
+            
+        case 'noTrail':
+            // Убираем след у врагов (работает в режиме выживания и VS AI)
+            enemyNoTrailActive = true;
+            enemyNoTrailEndTime = Date.now() + b.duration;
+            // Очищаем следы врагов
+            if (opponentType === 'survival') {
                 for (let e of survivalEnemies) {
                     e.trail = [{ x: e.x, y: e.y }];
                 }
             }
-            if (typeof opponentType !== 'undefined' && opponentType === 'ai' && typeof players !== 'undefined' && players[1] && players[1].alive) {
+            if (opponentType === 'ai' && players[1].alive) {
                 players[1].trail = [{ x: players[1].x, y: players[1].y }];
             }
-            if (typeof showMessage === 'function') showMessage(`✂️ СЛЕД ПРОТИВНИКА СТЁРТ!`);
+            showMessage(`✂️ СЛЕД ПРОТИВНИКА СТЁРТ!`);
             break;
     }
 }
 
 function drawBonuses() {
-    if (typeof bonuses === 'undefined' || typeof ctx === 'undefined' || typeof CELL_SIZE === 'undefined') return;
-    
     for (let b of bonuses) {
+        // Пульсирующий эффект
         const pulse = Math.sin(Date.now() * 0.008) * 0.3 + 0.7;
         ctx.fillStyle = b.color;
         ctx.globalAlpha = pulse;
@@ -157,57 +163,51 @@ function drawBonuses() {
     
     let offsetX = 10;
     let offsetY = 25;
-    const now = Date.now();
     
-    if (bonusSpeedActive) {
+    // Индикатор ускорения
+    if (speedActive) {
         ctx.fillStyle = '#00ff00';
         ctx.font = 'bold 14px monospace';
         ctx.fillText('⚡', offsetX, offsetY);
-        const remaining = Math.max(0, Math.ceil((bonusSpeedEndTime - now) / 1000));
+        const remaining = Math.max(0, Math.ceil((speedEndTime - Date.now()) / 1000));
         ctx.fillStyle = '#ffffff';
         ctx.font = '10px monospace';
         ctx.fillText(`${remaining}s`, offsetX + 20, offsetY);
         offsetX += 50;
     }
     
-    if (bonusShieldActive) {
+    // Индикатор щита
+    if (shieldActive) {
         ctx.fillStyle = '#0088ff';
         ctx.font = 'bold 14px monospace';
         ctx.fillText('🛡️', offsetX, offsetY);
-        const remaining = Math.max(0, Math.ceil((bonusShieldEndTime - now) / 1000));
+        const remaining = Math.max(0, Math.ceil((shieldEndTime - Date.now()) / 1000));
         ctx.fillStyle = '#ffffff';
         ctx.font = '10px monospace';
         ctx.fillText(`${remaining}s`, offsetX + 25, offsetY);
         offsetX += 50;
     }
     
-    if (bonusSlowActive) {
+    // Индикатор замедления врагов
+    if (enemySlowActive) {
         ctx.fillStyle = '#ff6600';
         ctx.font = 'bold 14px monospace';
         ctx.fillText('🐢', offsetX, offsetY);
-        const remaining = Math.max(0, Math.ceil((bonusSlowEndTime - now) / 1000));
+        const remaining = Math.max(0, Math.ceil((enemySlowEndTime - Date.now()) / 1000));
         ctx.fillStyle = '#ffffff';
         ctx.font = '10px monospace';
         ctx.fillText(`${remaining}s`, offsetX + 20, offsetY);
         offsetX += 50;
     }
     
-    if (bonusNoTrailActive) {
+    // Индикатор отсутствия следа у врагов
+    if (enemyNoTrailActive) {
         ctx.fillStyle = '#aa00ff';
         ctx.font = 'bold 14px monospace';
         ctx.fillText('✂️', offsetX, offsetY);
-        const remaining = Math.max(0, Math.ceil((bonusNoTrailEndTime - now) / 1000));
+        const remaining = Math.max(0, Math.ceil((enemyNoTrailEndTime - Date.now()) / 1000));
         ctx.fillStyle = '#ffffff';
         ctx.font = '10px monospace';
         ctx.fillText(`${remaining}s`, offsetX + 20, offsetY);
     }
-}
-
-function resetBonuses() {
-    bonuses = [];
-    bonusTimer = 0;
-    bonusShieldActive = false;
-    bonusSpeedActive = false;
-    bonusSlowActive = false;
-    bonusNoTrailActive = false;
 }
