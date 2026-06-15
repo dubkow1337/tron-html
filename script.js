@@ -24,6 +24,13 @@ let tournamentTarget = 3;
 let tournamentActive = false;
 let survivalEnemies = [];
 
+// ========== БОНУСЫ (флаги) ==========
+// Эти флаги устанавливаются в bonuses.js и используются здесь
+let shieldActive = false;
+let speedActive = false;
+let enemySlowActive = false;
+let enemyNoTrailActive = false;
+
 // ========== ЗВУК ==========
 let bgMusic = null;
 let soundEnabled = true;
@@ -265,9 +272,10 @@ function updateSurvival() {
     const player = players[0];
     if (!player.alive) return;
     
+    // Скорость врагов с учётом бонуса замедления
     let currentEnemySpeed = MOVE_INTERVAL;
     if (enemySlowActive) {
-        currentEnemySpeed = Math.min(140, MOVE_INTERVAL + 50);
+        currentEnemySpeed = Math.min(140, MOVE_INTERVAL + 45);
     }
     
     for (let i = 0; i < survivalEnemies.length; i++) {
@@ -330,7 +338,13 @@ function updateSurvival() {
         
         e.x += e.dirX;
         e.y += e.dirY;
-        e.trail.push({ x: e.x, y: e.y });
+        
+        // Добавляем след ТОЛЬКО если нет эффекта "Ножницы"
+        if (!enemyNoTrailActive) {
+            e.trail.push({ x: e.x, y: e.y });
+        } else {
+            e.trail = [{ x: e.x, y: e.y }];
+        }
         
         if (e.trail.length > 15) {
             e.trail.shift();
@@ -422,13 +436,18 @@ function initGame() {
         spawnSurvivalEnemies();
         players[1].alive = false;
     }
+    
     // Сброс бонусов
-    bonuses = [];
-    bonusTimer = 0;
-    shieldActive = false;
-    enemySlowActive = false;
-    enemyNoTrailActive = false;
-    speedActive = false;
+    if (typeof resetBonuses === 'function') {
+        resetBonuses();
+    } else {
+        // Ручной сброс флагов если функции нет
+        if (typeof bonuses !== 'undefined') bonuses = [];
+        shieldActive = false;
+        speedActive = false;
+        enemySlowActive = false;
+        enemyNoTrailActive = false;
+    }
     
     gameActive = false; winner = null;
     countdownActive = true; countdownValue = 3;
@@ -465,7 +484,11 @@ function resetGame() {
 
 function updateGame() {
     if (!gameActive) return;
-    for (let p of players) if (p.alive) { 
+    
+    // Движение игроков
+    for (let p of players) { 
+        if (!p.alive) continue;
+        
         p.x += p.dirX;
         p.y += p.dirY;
         p.trail.push({ x: p.x, y: p.y });
@@ -476,6 +499,7 @@ function updateGame() {
         
         addParticles(p.x, p.y, p.color);
     }
+    
     if (opponentType === 'survival') updateSurvival();
     else aiMove();
     updateParticles();
