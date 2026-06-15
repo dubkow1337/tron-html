@@ -24,7 +24,6 @@ let tournamentTarget = 3;
 let tournamentActive = false;
 let survivalEnemies = [];
 
-
 // ========== ЗВУК ==========
 let bgMusic = null;
 let soundEnabled = true;
@@ -266,11 +265,7 @@ function updateSurvival() {
     const player = players[0];
     if (!player.alive) return;
     
-    // Скорость врагов с учётом бонуса замедления
     let currentEnemySpeed = MOVE_INTERVAL;
-    if (enemySlowActive) {
-        currentEnemySpeed = Math.min(140, MOVE_INTERVAL + 45);
-    }
     
     for (let i = 0; i < survivalEnemies.length; i++) {
         let e = survivalEnemies[i];
@@ -332,13 +327,7 @@ function updateSurvival() {
         
         e.x += e.dirX;
         e.y += e.dirY;
-        
-        // Добавляем след ТОЛЬКО если нет эффекта "Ножницы"
-        if (!enemyNoTrailActive) {
-            e.trail.push({ x: e.x, y: e.y });
-        } else {
-            e.trail = [{ x: e.x, y: e.y }];
-        }
+        e.trail.push({ x: e.x, y: e.y });
         
         if (e.trail.length > 15) {
             e.trail.shift();
@@ -431,18 +420,6 @@ function initGame() {
         players[1].alive = false;
     }
     
-    // Сброс бонусов
-    if (typeof resetBonuses === 'function') {
-        resetBonuses();
-    } else {
-        // Ручной сброс флагов если функции нет
-        if (typeof bonuses !== 'undefined') bonuses = [];
-        shieldActive = false;
-        speedActive = false;
-        enemySlowActive = false;
-        enemyNoTrailActive = false;
-    }
-    
     gameActive = false; winner = null;
     countdownActive = true; countdownValue = 3;
     crashEffect.active = false; particles = [];
@@ -478,11 +455,7 @@ function resetGame() {
 
 function updateGame() {
     if (!gameActive) return;
-    
-    // Движение игроков
-    for (let p of players) { 
-        if (!p.alive) continue;
-        
+    for (let p of players) if (p.alive) { 
         p.x += p.dirX;
         p.y += p.dirY;
         p.trail.push({ x: p.x, y: p.y });
@@ -493,40 +466,14 @@ function updateGame() {
         
         addParticles(p.x, p.y, p.color);
     }
-    
     if (opponentType === 'survival') updateSurvival();
     else aiMove();
     updateParticles();
     
-    // ========== БОНУСЫ ==========
-    if (typeof updateBonuses === 'function') {
-        updateBonuses();
-    }
-    
-    // Проверка сбора бонусов
-    if (typeof bonuses !== 'undefined') {
-        for (let i = 0; i < bonuses.length; i++) {
-            let b = bonuses[i];
-            if (players[0].alive && players[0].x === b.x && players[0].y === b.y) {
-                if (typeof collectBonus === 'function') {
-                    collectBonus(b, players[0]);
-                }
-                bonuses.splice(i, 1);
-                i--;
-            }
-        }
-    }
-    
-    // ========== ПРОВЕРКА СТОЛКНОВЕНИЙ ==========
+    // Проверка столкновений
     for (let p of players) {
         if (!p.alive) continue;
         
-        // ЩИТ: если активен, пропускаем все проверки для игрока
-        if (shieldActive && p === players[0]) {
-            continue;  // игрок неуязвим
-        }
-        
-        // Столкновение с границами
         if (p.x < 0 || p.x >= WIDTH || p.y < 0 || p.y >= HEIGHT) {
             p.alive = false;
             crashEffect = { active: true, x: p.x, y: p.y, color: p.color, timer: 5 };
@@ -534,7 +481,6 @@ function updateGame() {
             continue;
         }
         
-        // Столкновение со своими следами
         for (let i = 0; i < p.trail.length - 2; i++) {
             if (p.trail[i].x === p.x && p.trail[i].y === p.y) {
                 p.alive = false;
@@ -545,7 +491,6 @@ function updateGame() {
         }
         if (!p.alive) continue;
         
-        // Столкновение со следами других игроков
         for (let other of players) {
             if (other === p) continue;
             for (let i = 0; i < other.trail.length - 1; i++) {
@@ -567,7 +512,6 @@ function updateGame() {
         }
         if (!p.alive) continue;
         
-        // Столкновение с врагами (режим выживания)
         for (let e of survivalEnemies) {
             if (!e.alive) continue;
             for (let i = 0; i < e.trail.length - 1; i++) {
@@ -589,7 +533,6 @@ function updateGame() {
         }
     }
     
-    // Определение победителя
     const alivePlayers = players.filter(p => p.alive);
     if (alivePlayers.length === 1 && opponentType !== 'survival') {
         let winnerIdx = players.findIndex(p => p.alive);
@@ -624,7 +567,6 @@ function draw() {
         ctx.beginPath(); ctx.moveTo(0, i * CELL_SIZE); ctx.lineTo(canvas.width, i * CELL_SIZE); ctx.stroke();
     }
     
-    // Следы игроков
     for (let p of players) {
         if (p.trail.length < 2) continue;
         ctx.beginPath();
@@ -641,7 +583,6 @@ function draw() {
         ctx.stroke();
     }
     
-    // Следы врагов (выживание)
     for (let e of survivalEnemies) {
         if (e.trail.length < 2) continue;
         ctx.beginPath();
@@ -658,7 +599,6 @@ function draw() {
         ctx.stroke();
     }
     
-    // Враги
     for (let e of survivalEnemies) {
         ctx.fillStyle = e.color;
         ctx.fillRect(e.x * CELL_SIZE, e.y * CELL_SIZE, CELL_SIZE - 4, CELL_SIZE - 4);
@@ -676,9 +616,6 @@ function draw() {
         if (crashEffect.timer <= 0) crashEffect.active = false;
     }
     
-    let blurLevel = Math.min(12, Math.floor(currentSteps / 50));
-    
-    // Мотоциклы (треугольники)
     for (let p of players) {
         if (p.alive) {
             const cx = p.x * CELL_SIZE + CELL_SIZE / 2;
@@ -713,11 +650,6 @@ function draw() {
             
             ctx.restore();
         }
-    }
-    
-    // Бонусы
-    if (typeof drawBonuses === 'function') {
-        drawBonuses();
     }
     
     if (countdownActive) {
