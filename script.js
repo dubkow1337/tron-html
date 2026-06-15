@@ -265,6 +265,12 @@ function updateSurvival() {
     const player = players[0];
     if (!player.alive) return;
     
+    // Эффект замедления врагов от бонуса
+    let currentEnemySpeed = MOVE_INTERVAL;
+    if (typeof enemySlowActive !== 'undefined' && enemySlowActive) {
+        currentEnemySpeed = Math.min(120, MOVE_INTERVAL + 30);
+    }
+    
     for (let i = 0; i < survivalEnemies.length; i++) {
         let e = survivalEnemies[i];
         if (!e.alive) continue;
@@ -327,7 +333,6 @@ function updateSurvival() {
         e.y += e.dirY;
         e.trail.push({ x: e.x, y: e.y });
         
-        // Ограничение длины следа врага (15 клеток)
         if (e.trail.length > 15) {
             e.trail.shift();
         }
@@ -418,6 +423,12 @@ function initGame() {
         spawnSurvivalEnemies();
         players[1].alive = false;
     }
+    // Сброс бонусов
+    bonuses = [];
+    bonusTimer = 0;
+    shieldActive = false;
+    enemySlowActive = false;
+    
     gameActive = false; winner = null;
     countdownActive = true; countdownValue = 3;
     crashEffect.active = false; particles = [];
@@ -458,7 +469,6 @@ function updateGame() {
         p.y += p.dirY;
         p.trail.push({ x: p.x, y: p.y });
         
-        // Ограничение длины следа (максимум 15 клеток)
         if (p.trail.length > 15) {
             p.trail.shift();
         }
@@ -468,6 +478,25 @@ function updateGame() {
     if (opponentType === 'survival') updateSurvival();
     else aiMove();
     updateParticles();
+    
+    // ========== БОНУСЫ ==========
+    if (typeof updateBonuses === 'function') {
+        updateBonuses();
+    }
+    
+    // Проверка сбора бонусов
+    if (typeof bonuses !== 'undefined') {
+        for (let i = 0; i < bonuses.length; i++) {
+            let b = bonuses[i];
+            if (players[0].alive && players[0].x === b.x && players[0].y === b.y) {
+                if (typeof collectBonus === 'function') {
+                    collectBonus(b, players[0]);
+                }
+                bonuses.splice(i, 1);
+                i--;
+            }
+        }
+    }
     
     for (let p of players) {
         if (!p.alive) continue;
@@ -619,7 +648,6 @@ function draw() {
             ctx.shadowColor = p.color;
             ctx.fillStyle = p.color;
             
-            // Треугольник
             ctx.beginPath();
             ctx.moveTo(10, 0);
             ctx.lineTo(-5, -7);
@@ -627,7 +655,6 @@ function draw() {
             ctx.closePath();
             ctx.fill();
             
-            // Внутренний блик
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
             ctx.moveTo(5, 0);
@@ -638,6 +665,11 @@ function draw() {
             
             ctx.restore();
         }
+    }
+    
+    // Отрисовка бонусов
+    if (typeof drawBonuses === 'function') {
+        drawBonuses();
     }
     
     if (countdownActive) {
